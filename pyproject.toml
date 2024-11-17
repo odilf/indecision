@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "minor-project"
+version = "0.1.0"
+description = "Final Project for Modern Physics Minor at TU Delft"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+matplotlib = "^3.9.2"
+numpy = "^2.1.3"
+scipy = "^1.14.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
