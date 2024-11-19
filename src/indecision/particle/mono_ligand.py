@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import override
-from particle import Particle, Event
-
+from .core import Particle, Event
 
 @dataclass
 class MonoLigandState:
@@ -29,6 +28,6 @@ class MonoLigandParticle(Particle[MonoLigandState]):
     @override
     def events(self, state):
         if state.is_attached:
-            return [Event(self.on_rate, transition=MonoLigandState.toggle)]
+            yield Event(self.on_rate, transition=MonoLigandState.toggle)
         else:
-            return [Event(self.off_rate, transition=MonoLigandState.toggle)]
+            yield Event(self.off_rate, transition=MonoLigandState.toggle)

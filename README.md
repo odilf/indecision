@@ -1,5 +1,6 @@
-# Minor Modern Physics Research Project 2024
+# indecision
 
-Code and report for the Research Project of the Modern Physics Minor at TU Delft.
+Python library and exploratory notebooks to make super selective or negatively selective particles. 
 
-Work in progress.
+TODO: Write guidelens for uv
+

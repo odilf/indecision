@@ -3,6 +3,7 @@ from typing import Any, Generator, Iterator, Type, get_args
 from particle import Particle
 from .convergence import ConvergenceCriterion
 
+
 def simulate[State](
     particle: Particle[State],
     number_of_particles: int,

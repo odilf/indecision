@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Iterable, Type
 
+
 @dataclass
 class Event[State]:
     rate: float
