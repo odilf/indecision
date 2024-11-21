@@ -28,6 +28,6 @@ class MonoLigandParticle(Particle[MonoLigandState]):
     @override
     def events(self, state):
         if state.is_attached:
-            yield Event(self.on_rate, transition=MonoLigandState.toggle)
+            yield Event(self.on_rate, transition=MonoLigandState.toggle, repr="Dettach")
         else:
-            yield Event(self.off_rate, transition=MonoLigandState.toggle)
+            yield Event(self.off_rate, transition=MonoLigandState.toggle, repr="Attach")

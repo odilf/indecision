@@ -1,15 +1,16 @@
-from typing import Any, Generator, Iterator, Type, get_args
+from typing import Any, Iterator, Callable
 from copy import copy
 import itertools
 
-from particle import Particle
+from indecision.particle import Particle
 from .convergence import ConvergenceCriterion
 
 
-def simulate[State](
+def simulate[State, Output](
     particle: Particle[State],
+    extractor: Callable[[list[State]], Output],
     number_of_particles: int,
-) -> Iterator[list[State]]:
+) -> Iterator[Output]:
     """
     Simulates a system of a particle.
 
@@ -23,41 +24,43 @@ def simulate[State](
     next_states = [copy(state) for state in states]
     transition_times = [particle.advance_state(state) for state in next_states]
 
-    yield states
+    yield extractor(states)
 
     # From t=0 to infinty
     for t in itertools.count(start=0):
         # Transition states if it is the time
-        for (i, (state, next_state, transition_time)) in enumerate(zip(states, next_states, transition_times)):
-            if t == transition_time:
-                states[i], next_states[i] = next_state, state # Swap the two states to create less garbage
-                transition_times[i] += particle.advance_state(next_state)
+        for (i, transition_time) in enumerate(transition_times):
+            if t >= transition_time:
+                states[i], next_states[i] = next_states[i], states[i] # Swap the two states to create less garbage
+                transition_times[i] += particle.advance_state(next_states[i])
 
-        yield states
+        yield extractor(states)
 
 
-def simulate_until[State](
+def simulate_until[State, Output](
     particle: Particle[State],
+    extractor: Callable[[list[State]], Output],
     steps: int,
     *args,
     **kwargs: dict[str, Any],
-) -> Iterator[list[State]]:
+) -> Iterator[Output]:
     t = 0
-    generator = simulate(particle, *args, **kwargs)
+    generator = simulate(particle, extractor, *args, **kwargs)
 
     while t < steps:
         yield next(generator)
 
 
-def simulate_until_converge[State](
+def simulate_until_converge[State, Output](
     particle: Particle[State],
-    convergence: ConvergenceCriterion,
+    extractor: Callable[[list[State]], Output],
+    convergence: ConvergenceCriterion[Output],
     *args,
     **kwargs,
-) -> Iterator[list[State]]:
-    generator = simulate(particle, *args, **kwargs)
+) -> Iterator[Output]:
+    generator = simulate(particle, extractor, *args, **kwargs)
 
-    recent_states = []  
+    recent_states = []
 
     for states in generator:
         recent_states.append(states)

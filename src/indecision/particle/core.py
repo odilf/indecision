@@ -9,6 +9,12 @@ class Event[State]:
     rate: float
     transition: Callable[[State], None]
 
+    repr: str | None = None
+
+    def __repr__(self):
+        return self.repr or repr(self.__class__)
+        # return self.__repr__() if self.string_repr is None else self.string_repr
+
 
 # Inherits from ABC (Abtract Base Class) to make sure that `on_rate` and `off_rate` are overriden.
 class Particle[State](ABC):
@@ -24,7 +30,7 @@ class Particle[State](ABC):
     @abstractmethod
     def events(self, state: State) -> Iterable[Event[State]]: ...
 
-    def advance_state(self, state: State) -> int:
+    def advance_state(self, state: State) -> float:
         """
         Advances in-place the state of a particle, and returns the time elapsed to make that transition.
         """
@@ -47,21 +53,3 @@ class Particle[State](ABC):
                 break
 
         return delta_t
-
-
-
-
-class ParticleInstance[State]:
-    """
-    The actual instance of the particle. This is a concrete class.
-    """
-
-    state: State
-    specification: Particle[State]
-
-    def __init__(self, state_type: Type[State], specification: Particle[State]):
-        self.state = state_type()
-        self.specification = specification
-
-    def advance_state(self) -> int:
-        return self.specification.advance_state(self.state)

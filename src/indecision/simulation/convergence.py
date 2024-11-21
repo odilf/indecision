@@ -1,10 +1,8 @@
-from typing import Callable, List, Sequence, TypeVar
+from typing import Callable, Sequence
 import numpy as np
 from scipy.stats import wasserstein_distance
 
-State = TypeVar("State") 
-
-class ConvergenceCriterion:
+class ConvergenceCriterion[State]:
     def __init__(
         self,
         metric: Callable[[State, State], float],
@@ -26,11 +24,11 @@ class ConvergenceCriterion:
         self.sample_size = sample_size
         self.history = []
 
-    def _compute_empirical_distribution(self, states: List[List[State]]) -> np.ndarray:
+    def _compute_empirical_distribution(self, states: list[list[State]]) -> np.ndarray:
         """ Computes an empirical distribtion for the given window of states.
 
             Args:
-            states (List[List[State]]): A list of states over time.
+            states (list[list[State]]): A list of states over time.
 
             Returns:
             np.ndarray: Flattened represention of the empirical distribution.
@@ -40,14 +38,14 @@ class ConvergenceCriterion:
         ]
         return np.array(flattened_states[: self.sample_size])
 
-    def has_converged(self, states: Sequence[List[State]]) -> bool:
+    def has_converged(self, states: Sequence[list[State]]) -> bool:
         """ Determines whether the system has converged by evaluating Wasserstein distances.
 
             Args:
-            states (Sequence[List[tate]]): A sequence of recent states.
+            states (Sequence[list[tate]]): A sequence of recent states.
 
             Returns:
-            bool: True if the system has conevrged, False otherwise.
+            bool: True if the system has converged, False otherwise.
         """
         self.history.append(states)
         if len(self.history) < self.window_size:
