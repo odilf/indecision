@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Iterable, Type
+import numpy as np
 
 
 @dataclass
 class Event[State]:
     rate: float
-
-    # TODO: Maybe transition should not be in-place? I think it's worth it to make it in-place to create less garbage, since this is Python after all.
     transition: Callable[[State], None]
 
 
@@ -29,11 +28,27 @@ class Particle[State](ABC):
         """
         Advances in-place the state of a particle, and returns the time elapsed to make that transition.
         """
+        events = list(self.events(state))
+        if not events:
+            raise RuntimeError("No events to process!")
+        
+        total_rate = sum(event.rate for event in events)
+        if total_rate == 0:
+            raise RuntimeError("Total rate is zero; no transitions are possible!")
 
-        events = self.events(state)
+        delta_t = -np.log(np.random.random()) / total_rate
 
-        # TODO:
-        raise Exception("TODO: do gillespie here")
+        r = np.random.uniform(0, total_rate)
+        cumulative_rate = 0.0
+        for event in events:
+            cumulative_rate += event.rate
+            if cumulative_rate > r:
+                event.transition(state)  
+                break
+
+        return delta_t
+
+
 
 
 class ParticleInstance[State]:
