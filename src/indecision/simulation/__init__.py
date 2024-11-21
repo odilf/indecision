@@ -57,5 +57,12 @@ def simulate_until_converge[State](
 ) -> Iterator[list[State]]:
     generator = simulate(particle, *args, **kwargs)
 
-    # [next(generator) for _ in range(steps)]
-    raise Exception("TODO: implement convergence criteria")
+    recent_states = []  
+
+    for states in generator:
+        recent_states.append(states)
+
+        if convergence.has_converged(recent_states):
+            break
+
+        yield states
