@@ -49,6 +49,7 @@ def simulate_until[State, Output](
 
     while t < steps:
         yield next(generator)
+        t += 1
 
 
 def simulate_until_converge[State, Output](
