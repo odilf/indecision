@@ -2,6 +2,7 @@ from typing import Callable, Sequence
 import numpy as np
 from scipy.stats import wasserstein_distance
 
+
 class ConvergenceCriterion[State]:
     def __init__(
         self,
@@ -10,9 +11,9 @@ class ConvergenceCriterion[State]:
         window_size: int,
         sample_size: int,
     ):
-        """ Initialise a convergence criterion based on empirical distribution convergence.
+        """Initialise a convergence criterion based on empirical distribution convergence.
 
-            Args:
+        Args:
             metric (Callable): A distance metric function `d(x, y)`.
             tolerance (float): Maximum allowable Wasserstein distance for convergence.
             window_size (int): Number of consecutive time steps to consider.
@@ -24,13 +25,13 @@ class ConvergenceCriterion[State]:
         self.sample_size = sample_size
         self.history = []
 
-    def _compute_empirical_distribution(self, states: list[list[State]]) -> np.ndarray:
-        """ Computes an empirical distribtion for the given window of states.
+    def _compute_empirical_distribution(self, states: list[list[State]]) -> np.ndarray[State]:
+        """Computes an empirical distribtion for the given window of states.
 
-            Args:
+        Args:
             states (list[list[State]]): A list of states over time.
 
-            Returns:
+        Returns:
             np.ndarray: Flattened represention of the empirical distribution.
         """
         flattened_states = [
@@ -39,12 +40,12 @@ class ConvergenceCriterion[State]:
         return np.array(flattened_states[: self.sample_size])
 
     def has_converged(self, states: Sequence[list[State]]) -> bool:
-        """ Determines whether the system has converged by evaluating Wasserstein distances.
+        """Determines whether the system has converged by evaluating Wasserstein distances.
 
-            Args:
+        Args:
             states (Sequence[list[tate]]): A sequence of recent states.
 
-            Returns:
+        Returns:
             bool: True if the system has converged, False otherwise.
         """
         self.history.append(states)
@@ -55,7 +56,7 @@ class ConvergenceCriterion[State]:
         older = self.history[-2 * self.window_size : -self.window_size]
 
         if len(older) < self.window_size:
-            return False  
+            return False
 
         recent_distribution = self._compute_empirical_distribution(recent)
         older_distribution = self._compute_empirical_distribution(older)

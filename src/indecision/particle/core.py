@@ -13,7 +13,6 @@ class Event[State]:
 
     def __repr__(self):
         return self.repr or repr(self.__class__)
-        # return self.__repr__() if self.string_repr is None else self.string_repr
 
 
 # Inherits from ABC (Abtract Base Class) to make sure that `on_rate` and `off_rate` are overriden.
@@ -37,7 +36,7 @@ class Particle[State](ABC):
         events = list(self.events(state))
         if not events:
             raise RuntimeError("No events to process!")
-        
+
         total_rate = sum(event.rate for event in events)
         if total_rate == 0:
             raise RuntimeError("Total rate is zero; no transitions are possible!")
@@ -49,7 +48,7 @@ class Particle[State](ABC):
         for event in events:
             cumulative_rate += event.rate
             if cumulative_rate > r:
-                event.transition(state)  
+                event.transition(state)
                 break
 
         return delta_t

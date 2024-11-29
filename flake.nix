@@ -17,32 +17,42 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs { inherit system; };
-
-        python = pkgs.python313;
       in
       {
-        devShells = {
-          default = {};
+        devShells = rec {
+          default = uv;
 
           impure = pkgs.mkShell {
-          packages = [
-            python
-            pkgs.uv
-          ];
-          # shellHook = ''
-          #   unset PYTHONPATH
-          # '';
-        };
+            packages = [
+              pkgs.uv
+            ];
+            # shellHook = ''
+            #   unset PYTHONPATH
+            # '';
+          };
 
           uv = pkgs.mkShell {
-            packages = [ pkgs.uv ];
+            packages = [
+              pkgs.rustc
+              pkgs.cargo
+              pkgs.uv
+            ];
           };
         };
         legacyPackages = pkgs;
+
+        formatter = pkgs.nixfmt-rfc-style;
       }
     );
 }

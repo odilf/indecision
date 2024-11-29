@@ -1,0 +1,15 @@
+[package]
+name = "indecision_rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "indecision_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+color-eyre = "0.6.3"
+rand = "0.8.5"
+pyo3 = { version = "0.23.2", features = ["extension-module"] }
+numpy = "0.23.0"
+

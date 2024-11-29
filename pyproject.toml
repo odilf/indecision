@@ -3,7 +3,7 @@ name = "indecision"
 version = "0.1.0"
 description = "Modeling of highly selective or un-selective nano-particles"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = "==3.12.*"
 dependencies = [
     "numpy>=2.1.3",
     "scipy>=1.14.1",

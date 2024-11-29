@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import override
 from .core import Particle, Event
 
+
 @dataclass
 class MonoLigandState:
     is_attached: bool = False
@@ -19,8 +20,10 @@ class MonoLigandParticle(Particle[MonoLigandState]):
     Equivalent to a [`MultiLigandParticle`] with one ligand.
     """
 
-    receptor_density: float
     state_type = MonoLigandState
+
+    receptor_density: float
+    binding_strength: float
 
     on_rate: float
     off_rate: float
@@ -28,6 +31,14 @@ class MonoLigandParticle(Particle[MonoLigandState]):
     @override
     def events(self, state):
         if state.is_attached:
-            yield Event(self.on_rate, transition=MonoLigandState.toggle, repr="Dettach")
+            yield Event(
+                self.off_rate * self.binding_strength,
+                MonoLigandState.toggle,
+                repr="Dettach",
+            )
         else:
-            yield Event(self.off_rate, transition=MonoLigandState.toggle, repr="Attach")
+            yield Event(
+                self.on_rate * self.receptor_density * self.binding_strength,
+                MonoLigandState.toggle,
+                repr="Attach",
+            )

@@ -11,7 +11,7 @@ class MultiLigandState:
         self.attached_ligands += 1
 
     def detach(self):
-        self.attached_ligands += 1
+        self.attached_ligands -= 1
 
 
 # TODO: Haven't actually tested this (but should work)
@@ -39,10 +39,8 @@ class MultiLigandParticle(Particle[MultiLigandState]):
 
         if state.attached_ligands < len(self.rates):
             on_rate = self.rates[state.attached_ligands][0]
-            on = Event(on_rate, MultiLigandState.attach)
-            yield on
+            yield Event(on_rate, MultiLigandState.attach, "attach")
 
         if state.attached_ligands > 0:
             off_rate = self.rates[state.attached_ligands - 1][1]
-            off = Event(off_rate, MultiLigandState.detach)
-            yield off
+            yield Event(off_rate, MultiLigandState.detach, "detach")
