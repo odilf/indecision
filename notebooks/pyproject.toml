@@ -2,17 +2,21 @@
 name = "indecision-notebooks"
 version = "0.1.0"
 description = "Notebooks for exploring indecision"
-requires-python = ">=3.13"
+requires-python = "==3.12.*"
 dependencies = [
     "indecision",
+    "indecision_rs",
     "matplotlib>=3.9.2",
     "plotly>=5.24.1",
 ]
 
 [tool.uv.sources]
 indecision = { path = "../", editable = true }
+indecision_rs = { path = "../rust", editable = true }
 
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
+    "maturin>=1.7.6",
+    "maturin-import-hook>=0.1.0",
 ]

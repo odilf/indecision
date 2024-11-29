@@ -1,0 +1,37 @@
+version = 1
+requires-python = "==3.12.*"
+
+[[package]]
+name = "indecision-rs"
+version = "0.1.0"
+source = { editable = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "maturin" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [{ name = "maturin", specifier = ">=1.7.6" }]
+
+[[package]]
+name = "maturin"
+version = "1.7.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c1/e6/e888521dada73aa113b6007db391b1df51b0f9fbfc8fc574722f38b05c5e/maturin-1.7.6.tar.gz", hash = "sha256:18c3f192c0f48e820fe684c9b89cc099f0107fd93845d39d6001610e3b1b94c4", size = 194386 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/56/fb6fd9ca641c37d66a6497e7a9cb7d4a818084a4b4f20afc0c9850250226/maturin-1.7.6-py3-none-linux_armv6l.whl", hash = "sha256:8c23309b75624cf4dc76682bbfe587ce42c9ba595bdc954c1c0b35ef3869470e", size = 8322433 },
+    { url = "https://files.pythonhosted.org/packages/83/39/5ad54688c2c367beca9a77983fd278b2b1214082841afc793ed95f057d30/maturin-1.7.6-py3-none-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:85eb76c502f3d9923371623fa153f67afc07b81aa3a28a2620340564bf521e6a", size = 16018588 },
+    { url = "https://files.pythonhosted.org/packages/3b/20/d25076dbc56a4349e481294ddb891a037a5cd09678adc8ffce5431c86b58/maturin-1.7.6-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:37f42a6e15cd49e12a13475b105239e1da20763d50213d541ad56c78d900df9d", size = 8230347 },
+    { url = "https://files.pythonhosted.org/packages/a7/b9/11a728ed5c2c5a286923f0ec2f69b580ce4a0d4d543a6a469f53da73b5d6/maturin-1.7.6-py3-none-manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686.whl", hash = "sha256:f64b3a30f3af59fbdbeba980508c7a8294b5f5202a292f41800d22cb8ab69238", size = 8770513 },
+    { url = "https://files.pythonhosted.org/packages/1c/c1/c3d9f21400b92e9ef6e15faf0b98c1dd1dd2c087b593e5c9b4af836643cd/maturin-1.7.6-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:41d3f0af4a15ee328aa16ba5581f1bfdf0ad88f2a3e1ee9ebf77d2fe269d05af", size = 9019999 },
+    { url = "https://files.pythonhosted.org/packages/15/29/eba9ea487a06a2ffdac278ed2437e46b9e6720f6d50724faef33646899af/maturin-1.7.6-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:41395b4b4d8c35fb2c86143bc3a8808024076a60ed72bfa0002f032f2913ee3d", size = 8470140 },
+    { url = "https://files.pythonhosted.org/packages/c5/99/c998ec107b5e3e3b0da89b9db32297bf17c6d6b89b967e7e362fff5105f6/maturin-1.7.6-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:534c0663c10b590f9c1de8c49f06c0d7da7e1d3078f3975b0191b139a73f051b", size = 8208329 },
+    { url = "https://files.pythonhosted.org/packages/93/b8/1760354cb8410b2d01fc025d11680f3cbf4e2b4196d66a962e75e1618b59/maturin-1.7.6-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:517a0b469199fab8a5e05a2f2477e156c90f80ed160e28e6ee42d5315c2c424b", size = 8797661 },
+    { url = "https://files.pythonhosted.org/packages/90/cd/fdc71b8c12ff8833ab187bc94a4cb5fbdb936c0459dd17bf89b4403c4131/maturin-1.7.6-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:44c39226a22c2c587e3b886890c76b6ba950ab0f7b129932f8f0498441d47981", size = 10301221 },
+    { url = "https://files.pythonhosted.org/packages/69/62/949bb1c3b14c457514522d0d86304a5d4abe2b4d4c7c7c1e3303c82f80f9/maturin-1.7.6-py3-none-win32.whl", hash = "sha256:8455cecb948c01ff20689a953a2fd034d4ef94f2bf256cf817beb12572e3051c", size = 6746354 },
+    { url = "https://files.pythonhosted.org/packages/4e/be/34ae6e108a812ac6e3eb0cbe2bc5fb614505d11ad7e816cf38e24a7e7cd1/maturin-1.7.6-py3-none-win_amd64.whl", hash = "sha256:84382c7a10d3c84cdfeb230d9b88f78fd99c2aebbd121fd8f04efc706ff65507", size = 7623856 },
+    { url = "https://files.pythonhosted.org/packages/7a/22/a7efcb471311b0c72c5b2ead613de485078730665a72397c986b90519032/maturin-1.7.6-py3-none-win_arm64.whl", hash = "sha256:cc5a14f42d6f2cf3eff944f2d00d0ce45fc6060d61e51aa8b8c407efbea4dea8", size = 6518127 },
+]

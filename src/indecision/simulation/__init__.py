@@ -29,9 +29,12 @@ def simulate[State, Output](
     # From t=0 to infinty
     for t in itertools.count(start=0):
         # Transition states if it is the time
-        for (i, transition_time) in enumerate(transition_times):
+        for i, transition_time in enumerate(transition_times):
             if t >= transition_time:
-                states[i], next_states[i] = next_states[i], states[i] # Swap the two states to create less garbage
+                states[i], next_states[i] = (
+                    next_states[i],
+                    states[i],
+                )  # Swap the two states to create less garbage
                 transition_times[i] += particle.advance_state(next_states[i])
 
         yield extractor(states)
