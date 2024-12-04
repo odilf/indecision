@@ -1,3 +1,7 @@
 /target
 .venv
 
+# ignore build artifacts
+*.so
+*.dylib
+*.dll

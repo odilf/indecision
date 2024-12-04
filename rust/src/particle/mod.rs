@@ -1,8 +1,15 @@
 mod mono_ligand;
+mod multi_ligand;
 
 pub use mono_ligand::MonoLigand;
+pub use multi_ligand::MultiLigand;
 
 use color_eyre::eyre;
+
+pub trait Attach {
+    /// Whether to count the particle as attached to the receptor or not.
+    fn is_attached(&self) -> bool;
+}
 
 pub trait Particle {
     type State;
@@ -43,12 +50,12 @@ pub trait Particle {
         unsafe { std::hint::unreachable_unchecked() }
     }
 
-    fn simulation(self) -> crate::simulation::Simulation<Self>
+    fn simulation(self) -> crate::simulation::SimulationSingle<Self>
     where
         Self: Sized,
         Self::State: Default,
     {
-        crate::simulation::Simulation::new(self)
+        crate::simulation::SimulationSingle::new(self)
     }
 }
 
@@ -56,4 +63,102 @@ pub trait Particle {
 pub struct Event<State> {
     pub rate: f64,
     pub transition: fn(&State) -> State,
+}
+
+#[macro_export]
+macro_rules! monomorphize {
+    ($type:path, $simulation:ident, $simulation_single:ident, $transition:ident) => {
+        // Conflicting methods, has to be added manually.
+        // #[pyo3_stub_gen::derive::gen_stub_pymethods]
+        // #[pyo3::pymethods]
+        // impl $type {
+        //     fn simulation(&self) -> $simulation_single {
+        //         $simulation_single::new(*self)
+        //     }
+        // }
+
+        #[pyo3_stub_gen::derive::gen_stub_pyclass]
+        #[pyo3::pyclass]
+        pub struct $simulation {
+            pub inner: crate::simulation::Simulation<$type>,
+        }
+
+        #[pyo3_stub_gen::derive::gen_stub_pymethods]
+        #[pyo3::pymethods]
+        impl $simulation {
+            #[new]
+            pub fn new(particle: $type, n: usize) -> Self {
+                Self {
+                    inner: crate::simulation::Simulation::new(particle, n),
+                }
+            }
+
+            pub fn sample(&self, samples: usize) -> Vec<Vec<<$type as Particle>::State>> {
+                self.inner
+                    .sample(samples)
+                    .map(|s| s.into_iter().map(|v| v.clone()).collect())
+                    .collect()
+            }
+
+            pub fn thetas(&self, samples: usize) -> Vec<f64> {
+                self.inner.thetas(samples).collect()
+            }
+
+            pub fn advance_until(&mut self, t: f64) {
+                self.inner.advance_until(t);
+            }
+        }
+
+        #[pyo3_stub_gen::derive::gen_stub_pyclass]
+        #[pyo3::pyclass]
+        pub struct $simulation_single {
+            pub inner: crate::simulation::SimulationSingle<$type>,
+        }
+
+        #[pyo3_stub_gen::derive::gen_stub_pymethods]
+        #[pyo3::pymethods]
+        impl $simulation_single {
+            #[new]
+            pub fn new(particle: $type) -> Self {
+                Self {
+                    inner: crate::simulation::SimulationSingle::new(particle),
+                }
+            }
+
+            #[getter]
+            pub fn transition_history(&self) -> Vec<$transition> {
+                self.inner
+                    .transition_history
+                    .iter()
+                    .map(|t| $transition { inner: *t })
+                    .collect()
+            }
+
+            pub fn advance_until(&mut self, t: f64) {
+                self.inner.advance_until(t);
+            }
+        }
+
+        #[pyo3_stub_gen::derive::gen_stub_pyclass]
+        #[pyo3::pyclass]
+        pub struct $transition {
+            pub inner: crate::simulation::Transition<<$type as Particle>::State>,
+        }
+
+        #[pyo3_stub_gen::derive::gen_stub_pymethods]
+        #[pyo3::pymethods]
+        impl $transition {
+            #[getter]
+            /// The time at which the event happened.
+            pub fn time(&self) -> f64 {
+                self.inner.time
+            }
+
+            #[getter]
+            /// The state that it was transitioned _to_.
+            pub fn state(&self) -> <$type as Particle>::State {
+                self.inner.state
+            }
+        }
+    };
 }

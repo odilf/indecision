@@ -1,0 +1,103 @@
+use crate::particle::Particle;
+
+use super::Transition;
+
+/// A simulation of a single particle
+#[derive(Clone, Debug, Default)]
+pub struct SimulationSingle<P: Particle> {
+    pub particle: P,
+    pub time: f64,
+    pub next_transition: Transition<P::State>,
+    pub transition_history: Vec<Transition<P::State>>,
+}
+
+// Public API for Python
+impl<P: Particle> SimulationSingle<P> {
+    pub fn new(particle: P) -> Self
+    where
+        P::State: Default,
+    {
+        Self {
+            particle,
+            time: 0.0,
+            next_transition: Transition {
+                time: 0.0,
+                state: P::State::default(),
+            },
+            transition_history: Vec::new(),
+        }
+    }
+
+    pub fn advance_until(&mut self, t: f64)
+    where
+        P::State: Clone,
+    {
+        while t >= self.next_transition.time {
+            // TODO: This might be doable more efficiently with `mem::swap` shenanigans
+            self.transition_history.push(self.next_transition.clone());
+            let (next_state, delta_t) = self
+                .particle
+                .advance_state(&self.next_transition.state)
+                .unwrap();
+
+            self.next_transition = Transition {
+                state: next_state,
+                time: self.time + delta_t,
+            };
+
+            self.time += delta_t;
+        }
+
+        self.time = t;
+    }
+
+    pub fn multiple(self, n: usize) -> super::Simulation<P>
+    where
+        P: Clone,
+        P::State: Default,
+    {
+        super::Simulation::new(self.particle, n)
+    }
+}
+
+// Private API for Python
+impl<P: Particle> SimulationSingle<P> {
+    /// The last transition that had occurrured at the given time.
+    pub fn last_transition_at_time(&self, time: f64) -> Option<&Transition<P::State>> {
+        let mut last_transition = None;
+        for transition in &self.transition_history {
+            if transition.time > time {
+                return last_transition;
+            }
+
+            last_transition = Some(transition)
+        }
+
+        None
+    }
+
+    /// The state of the particle at the given time.
+    pub fn state_at_time(&self, time: f64) -> Option<&P::State> {
+        Some(&self.last_transition_at_time(time)?.state)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::particle::MonoLigand;
+
+    #[test]
+    fn state_at_time() {
+        let particle = MonoLigand {
+            receptor_density: 1.0,
+            binding_strength: 1.0,
+            on_rate: 1.0,
+            off_rate: 1.0,
+        };
+
+        let mut sim = SimulationSingle::new(particle);
+        sim.advance_until(100.0);
+        sim.state_at_time(0.0).unwrap();
+    }
+}

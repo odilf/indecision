@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use indecision::particle::{self, Particle as _};
+use core::particle::{self, Particle as _};
 
 fn main() -> eyre::Result<()> {
     let particle = particle::MonoLigand {
