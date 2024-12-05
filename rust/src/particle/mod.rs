@@ -6,6 +6,7 @@ pub use multi_ligand::MultiLigand;
 
 use color_eyre::eyre;
 
+/// Particles that can output a binary "I'm attached" or "I'm not attached". 
 pub trait Attach {
     /// Whether to count the particle as attached to the receptor or not.
     fn is_attached(&self) -> bool;
@@ -68,7 +69,7 @@ pub struct Event<State> {
 #[macro_export]
 macro_rules! monomorphize {
     ($type:path, $simulation:ident, $simulation_single:ident, $transition:ident) => {
-        // Conflicting methods, has to be added manually.
+        // Conflicting methods, has to be added manually :(
         // #[pyo3_stub_gen::derive::gen_stub_pymethods]
         // #[pyo3::pymethods]
         // impl $type {
