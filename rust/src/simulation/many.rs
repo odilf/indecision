@@ -14,10 +14,13 @@ pub struct Simulation<P: Particle> {
 impl<P: Particle> Simulation<P> {
     pub fn new(particle: P, n: usize) -> Self
     where
-        P::State: Default, P: Clone,
+        P::State: Default,
+        P: Clone,
     {
         Self {
-            simulations: (0..n).map(|_| SimulationSingle::new(particle.clone())).collect(),
+            simulations: (0..n)
+                .map(|_| SimulationSingle::new(particle.clone()))
+                .collect(),
             _phantom: std::marker::PhantomData,
         }
     }
@@ -41,15 +44,10 @@ impl<P: Particle> Simulation<P> {
             .iter()
             .map(|sim| sim.state_at_time(time))
             .collect()
-        // Some(&self.last_transition_at_time(time)?.state)
     }
 
     pub fn sample(&self, samples: usize) -> impl Iterator<Item = Vec<&P::State>> {
         let step = self.time() / samples as f64;
-
-        for sim in &self.simulations {
-            dbg!(sim.transition_history.len());
-        }
 
         (0..samples).map(move |i| {
             self.states_at_time(i as f64 * step)

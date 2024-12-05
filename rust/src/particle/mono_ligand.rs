@@ -46,7 +46,7 @@ impl super::Particle for MonoLigand {
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         if state.is_attached {
             return vec![Event {
-                rate: self.off_rate * self.binding_strength,
+                rate: self.off_rate,
                 transition: |state| state.toggle(),
             }];
         } else {

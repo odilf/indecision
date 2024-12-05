@@ -63,17 +63,28 @@ impl<P: Particle> SimulationSingle<P> {
 // Private API for Python
 impl<P: Particle> SimulationSingle<P> {
     /// The last transition that had occurrured at the given time.
+    ///
+    /// If the time is the same as a transition, that transition is returned.
+    ///
+    /// It will return `None` if the time is before the first transition or after the next
+    /// scheduled transition. 
     pub fn last_transition_at_time(&self, time: f64) -> Option<&Transition<P::State>> {
         let mut last_transition = None;
         for transition in &self.transition_history {
             if transition.time > time {
                 return last_transition;
+            } else if transition.time == time {
+                return Some(transition);
             }
 
             last_transition = Some(transition)
         }
 
-        None
+        if self.next_transition.time > time {
+            last_transition
+        } else {
+            None
+        }
     }
 
     /// The state of the particle at the given time.
@@ -97,7 +108,7 @@ mod tests {
         };
 
         let mut sim = SimulationSingle::new(particle);
-        sim.advance_until(100.0);
+        sim.advance_until(1.0);
         sim.state_at_time(0.0).unwrap();
     }
 }

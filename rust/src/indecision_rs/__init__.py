@@ -1,3 +1,0 @@
-
-def test_from_python():
-    ...
