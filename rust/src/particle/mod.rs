@@ -13,9 +13,14 @@ pub trait Attach {
 }
 
 pub trait Particle {
+    /// A type that represents the state that the particle can be in.
     type State;
 
+    /// Returns the possible events that can happen to the particle in the current state
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>>;
+
+    /// Create a new state initial for the particle. 
+    fn new_state(&self) -> Self::State;
 
     /// Advances in-place the state of a particle, and returns the time elapsed to make that transition.
     fn advance_state(&self, state: &Self::State) -> eyre::Result<(Self::State, f64)> {
@@ -51,10 +56,10 @@ pub trait Particle {
         unsafe { std::hint::unreachable_unchecked() }
     }
 
+    /// Creates a simulation object for this particle. 
     fn simulation(self) -> crate::simulation::SimulationSingle<Self>
     where
         Self: Sized,
-        Self::State: Default,
     {
         crate::simulation::SimulationSingle::new(self)
     }

@@ -13,16 +13,15 @@ pub struct SimulationSingle<P: Particle> {
 
 // Public API for Python
 impl<P: Particle> SimulationSingle<P> {
-    pub fn new(particle: P) -> Self
-    where
-        P::State: Default,
-    {
+    pub fn new(particle: P) -> Self {
+        let initial_state = particle.new_state();
+
         Self {
             particle,
             time: 0.0,
             next_transition: Transition {
                 time: 0.0,
-                state: P::State::default(),
+                state: initial_state,
             },
             transition_history: Vec::new(),
         }
@@ -67,7 +66,7 @@ impl<P: Particle> SimulationSingle<P> {
     /// If the time is the same as a transition, that transition is returned.
     ///
     /// It will return `None` if the time is before the first transition or after the next
-    /// scheduled transition. 
+    /// scheduled transition.
     pub fn last_transition_at_time(&self, time: f64) -> Option<&Transition<P::State>> {
         let mut last_transition = None;
         for transition in &self.transition_history {

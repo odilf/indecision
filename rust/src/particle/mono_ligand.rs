@@ -56,6 +56,10 @@ impl super::Particle for MonoLigand {
             }];
         }
     }
+
+    fn new_state(&self) -> Self::State {
+        MonoLigandState { is_attached: false }
+    }
 }
 
 #[pyo3_stub_gen::derive::gen_stub_pymethods]

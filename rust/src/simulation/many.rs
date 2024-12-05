@@ -1,3 +1,7 @@
+// use rayon::iter::{IntoParallelIterator as _, IntoParallelRefIterator as _, IntoParallelRefMutIterator as _};
+
+use rayon::prelude::*;
+
 use crate::particle::{self, Attach as _, Particle};
 
 use super::SimulationSingle;
@@ -14,7 +18,6 @@ pub struct Simulation<P: Particle> {
 impl<P: Particle> Simulation<P> {
     pub fn new(particle: P, n: usize) -> Self
     where
-        P::State: Default,
         P: Clone,
     {
         Self {
@@ -33,10 +36,12 @@ impl<P: Particle> Simulation<P> {
     pub fn advance_until(&mut self, t: f64)
     where
         P::State: Clone,
+        P: Send + Sync,
+        P::State: Send + Sync,
     {
-        for simulation in &mut self.simulations {
-            simulation.advance_until(t);
-        }
+        self.simulations
+            .par_iter_mut()
+            .for_each(|sim| sim.advance_until(t))
     }
 
     pub fn states_at_time(&self, time: f64) -> Option<Vec<&P::State>> {

@@ -1,18 +1,12 @@
 from indecision_rs import particle, simulate  # , extract
 from matplotlib import pyplot as plt
 
-p = particle.MonoLigand(
+p = particle.MultiLigand(
     receptor_density=1.0,
     binding_strength=0.1,
-    on_rate=0.1,
-    off_rate=0.1,
+    on_rates=[1.0, 0.5, 0.25],
+    off_rates=[1.0, 0.5, 0.25],
 )
-
-# simulation = simulate.multiple(
-#     p, 
-#     number_of_particles=1000, 
-#     until=100_000.0
-# )
 
 simulation = p.simulate_many(1000)
 simulation.advance_until(1000.0)
