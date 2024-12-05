@@ -105,6 +105,10 @@ macro_rules! monomorphize {
                 self.inner.thetas(samples).collect()
             }
 
+            pub fn last_theta(&self) -> f64 {
+                self.inner.last_theta()
+            }
+
             pub fn advance_until(&mut self, t: f64) {
                 self.inner.advance_until(t);
             }

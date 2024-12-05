@@ -56,9 +56,9 @@ def __(np, particle):
             )
             
             simulation = p.simulate_many(N)
-            simulation.advance_until(100.0)
-            
-            theta = simulation.thetas(samples=1000)[-1]
+            simulation.advance_until(50.0)
+
+            theta = simulation.last_theta()
             _thetas.append(theta)
 
         data[binding_strength] = _thetas

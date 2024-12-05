@@ -55,6 +55,18 @@ impl<P: Particle> Simulation<P> {
         })
     }
 
+    pub fn last_theta(&self) -> f64
+    where
+        P::State: particle::Attach,
+    {
+        self.states_at_time(self.time())
+            .expect("We are on a valid time")
+            .iter()
+            .filter(|&&state| state.is_attached())
+            .count() as f64
+            / self.simulations.len() as f64
+    }
+
     pub fn thetas(&self, samples: usize) -> impl Iterator<Item = f64> + use<'_, P>
     where
         P::State: particle::Attach,
