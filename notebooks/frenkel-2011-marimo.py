@@ -1,17 +1,17 @@
 import marimo
 
-__generated_with = "0.9.31"
+__generated_with = "0.10.2"
 app = marimo.App(width="medium")
 
 
 @app.cell
-def __():
+def _():
     import marimo as mo
     return (mo,)
 
 
 @app.cell
-def __():
+def _():
     from indecision_rs import particle, simulate
     from matplotlib import pyplot as plt
     import numpy as np
@@ -19,18 +19,19 @@ def __():
 
 
 @app.cell
-def __(particle, plt):
+def _(particle, plt):
     _p = particle.MonoLigand(
         receptor_density=0.3,
-        binding_strength=10.0,
+        binding_strength=1.0,
         on_rate=1.0,
-        off_rate=1.0,
+        off_rate=0.1,
     )
 
     _simulation = _p.simulate_many(1000)
-    _simulation.advance_until(10.0)
+    _simulation.advance_until(20.0)
 
     _thetas = _simulation.thetas(samples=1000)
+
 
     plt.title("Binding of many mono-ligand particles over time")
     plt.plot(_thetas)
@@ -39,12 +40,12 @@ def __(particle, plt):
 
 
 @app.cell
-def __(np, particle):
+def _(np, particle):
     # receptor_densities = np.linspace(0.0001, 1.0, num=100)
     receptor_densities = np.logspace(-4.0, 0.0, num=100)
     # print(receptor_densities)
 
-    N = 10_000
+    N = 100_000
     data = {}
     for binding_strength in [1.0, 5.0, 10.0, 40.0]:
         _thetas = []
@@ -76,7 +77,7 @@ def __(np, particle):
 
 
 @app.cell
-def __(N, data, plt, receptor_densities):
+def _(N, data, plt, receptor_densities):
     plt.xscale('log')
     plt.yscale('log')
 
@@ -90,23 +91,25 @@ def __(N, data, plt, receptor_densities):
 
 
 @app.cell
-def __(data, plt):
-    plt.xscale('log')
-    plt.yscale('log')
+def _(N, data, np, plt, receptor_densities):
+    def plot_selectivites(data, convolve=10):
+        plt.xscale('log')
+        
+        for _binding_strength, _thetas in data.items():
+            _selectivity = np.gradient(np.log(_thetas), np.log(receptor_densities))
+            _selectivity_smooth = np.convolve(_selectivity, np.ones(convolve)/convolve, 'same')
+            plt.plot(receptor_densities * N, _selectivity_smooth, label=f"binding strength: {_binding_strength:.2E}")
 
-    for _binding_strength, _thetas in data.items():
-        ...
-        # TODO:
-        # plt.plot(receptor_densities * N, _thetas, label=f"binding strength: {_binding_strength}")
+        plt.legend(loc=(1.04, 0))
+        plt.show()
 
     plt.title("Selectivity of mono-ligand particles with respect to number of receptors")
-    plt.legend()
-    plt.show()
-    return
+    plot_selectivites(data)
+    return (plot_selectivites,)
 
 
 @app.cell
-def __(particle, plt):
+def _(particle, plt):
     _p = particle.MultiLigand(
         receptor_density=0.3,
         binding_strength=1.0,
@@ -126,24 +129,25 @@ def __(particle, plt):
 
 
 @app.cell
-def __(N, np, particle):
+def _(np, particle):
     # receptor_densities = np.linspace(0.0001, 1.0, num=100)
-    receptor_densities_multi = np.logspace(-4.0, 0.0, num=100)
+    receptor_densities_multi = np.logspace(-4.0, 10.0, num=100)
     # print(receptor_densities)
 
     N_multi = 10_000
     data_multi = {}
-    for _binding_strength in [0.5, 1.0, 5.0, 10.0, 40.0]:
+    # for _binding_strength in [0.01, 0.5, 1.0, 5.0, 10.0, 40.0]:
+    for _binding_strength in [*np.logspace(-9.0, 1.0, num=10), 10, 20, 40]:
         _thetas = []
         for _rd in receptor_densities_multi:
             _p = particle.MultiLigand(
                 receptor_density=_rd,
                 binding_strength=_binding_strength,
-                on_rates=np.array([1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]) * 1.0,
+                on_rates=np.array([1.0, 1.0, 1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]) * 1.0,
                 off_rates=np.array([1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]) * 1.0,
             )
 
-            _simulation = _p.simulate_many(N)
+            _simulation = _p.simulate_many(N_multi)
             _simulation.advance_until(100.0)
 
             _theta = _simulation.last_theta()
@@ -154,15 +158,27 @@ def __(N, np, particle):
 
 
 @app.cell
-def __(N_multi, data_multi, plt, receptor_densities):
+def _(N_multi, data_multi, plt, receptor_densities):
     plt.xscale('log')
     plt.yscale('log')
 
     for _binding_strength, _thetas in data_multi.items():
-        plt.plot(receptor_densities * N_multi, _thetas, label=f"binding strength: {_binding_strength}")
+        plt.plot(receptor_densities * N_multi, _thetas, label=f"binding strength: {_binding_strength:.2E}")
 
-    plt.legend()
+    # plt.xlim(1e-5, 1e3)
+    # plt.ylim(1e-5, 1e3)
+    ax = plt.gca()
+    ax.set_aspect('equal', adjustable='box')
+    plt.legend(loc=(1.04, 0))
     plt.show()
+
+    return (ax,)
+
+
+@app.cell
+def _(data_multi, plot_selectivites, plt):
+    plt.title("Selectivity of multi-ligand particles with respect to number of receptors")
+    plot_selectivites(data_multi)
     return
 
 
