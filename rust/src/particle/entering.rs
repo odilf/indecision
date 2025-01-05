@@ -98,13 +98,9 @@ impl super::Particle for Entering {
         }
 
         if !state.has_entered {
+            let obstruction = self.obstruction_factor.powi(state.attached_ligands as i32);
             events.push(Event {
-                rate: todo!(),
-                transition: Self::State::toggle_entered,
-            });
-        } else {
-            events.push(Event {
-                rate: todo!(),
+                rate: self.enter_rate * obstruction * self.receptor_density,
                 transition: Self::State::toggle_entered,
             });
         }
