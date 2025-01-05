@@ -27,8 +27,7 @@ To use jupyter vscode, I think you can run:
 
 ```bash
 cd notebooks/
-uv run --with jupyter
-code .
+uv run --with jupyter code .
 ```
 
 You can also run marimo with
