@@ -1,8 +1,10 @@
 mod mono_ligand;
 mod multi_ligand;
+mod entering;
 
 pub use mono_ligand::MonoLigand;
 pub use multi_ligand::MultiLigand;
+pub use entering::Entering;
 
 use color_eyre::eyre;
 

@@ -12,7 +12,7 @@ pyo3_stub_gen::define_stub_info_gatherer!(stub_info);
 #[pymodule]
 mod core {
     #[pymodule_export]
-    use crate::particle::{MonoLigand, MultiLigand};
+    use crate::particle::{MonoLigand, MultiLigand, Entering};
 
     // #[pymodule_export]
     // use crate::simulation::{MonoLigand, MultiLigand};

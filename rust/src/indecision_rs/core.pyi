@@ -3,6 +3,53 @@
 
 import typing
 
+class Entering:
+    r"""
+    A multi-valent particle that can attach and enter a host. 
+    
+    Ligands obtruct the particle from entering, where for each additional attached ligand,
+    the entering rate is decreased by a constant factor.
+    """
+    def __new__(cls,receptor_density:float, binding_strength:float, on_rates:typing.Sequence[float], off_rates:typing.Sequence[float], enter_rate:float, obstruction_factor:float): ...
+    def max_ligands(self) -> int:
+        ...
+
+    def simulate(self) -> EnteringSimulationSingle:
+        ...
+
+    def simulate_many(self, n:int) -> EnteringSimulation:
+        ...
+
+
+class EnteringSimulation:
+    def __new__(cls,particle:Entering, n:int): ...
+    def sample(self, samples:int) -> list[list[EnteringState]]:
+        ...
+
+    def thetas(self, samples:int) -> list[float]:
+        ...
+
+    def last_theta(self) -> float:
+        ...
+
+    def advance_until(self, t:float) -> None:
+        ...
+
+
+class EnteringSimulationSingle:
+    transition_history: list[EnteringTransition]
+    def __new__(cls,particle:Entering): ...
+    def advance_until(self, t:float) -> None:
+        ...
+
+
+class EnteringState:
+    ...
+
+class EnteringTransition:
+    time: float
+    state: EnteringState
+
 class MonoLiagndTransition:
     time: float
     state: MonoLigandState
@@ -57,12 +104,6 @@ class MultiLiagndTransition:
 
 class MultiLigand:
     r"""
-    A particle that can attach to a receptor.
-    
-    This particle is a simple model of a ligand that can attach to a receptor. It has a binding
-    strength that determines how likely it is to attach to a receptor, and a receptor density that
-    determines how many receptors are available to attach to.
-    
     # Invariants
     - `on_rates.len() == off_rates.len()`
     """
