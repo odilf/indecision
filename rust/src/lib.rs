@@ -1,3 +1,7 @@
+//! Framework for experimenting on selectivity of nano-particles
+
+#![warn(missing_docs)]
+
 mod extract;
 pub mod particle;
 pub mod simulation;
@@ -12,8 +16,5 @@ pyo3_stub_gen::define_stub_info_gatherer!(stub_info);
 #[pymodule]
 mod core {
     #[pymodule_export]
-    use crate::particle::{MonoLigand, MultiLigand, Interfering};
-
-    // #[pymodule_export]
-    // use crate::simulation::{MonoLigand, MultiLigand};
+    use crate::particle::{Interfering, MonoLigand, MultiLigand};
 }

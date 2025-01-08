@@ -33,10 +33,16 @@ impl MonoLigandState {
 #[pyo3::pyclass]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MonoLigand {
+    /// Density of receptors relative to the number of particles.
     pub receptor_density: f64,
+
+    /// The strength the particle binds with. 
     pub binding_strength: f64,
 
+    /// Rate at which the particle binds.
     pub on_rate: f64,
+
+    /// Rate at which the particle unbinds. 
     pub off_rate: f64,
 }
 

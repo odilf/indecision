@@ -21,8 +21,8 @@ fn main() -> eyre::Result<()> {
     }
 
     for sim in &simulations {
-        dbg!(sim.transition_history.len());
-        dbg!(sim.time);
+        // dbg!(sim.transition_history.len());
+        dbg!(sim.time());
     }
 
     Ok(())

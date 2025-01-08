@@ -1,21 +1,28 @@
-// use rayon::iter::{IntoParallelIterator as _, IntoParallelRefIterator as _, IntoParallelRefMutIterator as _};
-
 use rayon::prelude::*;
 
 use crate::particle::{self, Attach as _, Particle};
 
 use super::SimulationSingle;
 
-/// Invariant: All internal simulations must be on the same time.
+/// Simulation of many particles at once.
+///
+/// # Invariants:
+/// - All internal simulations must be on the same time.
 #[derive(Clone, Debug, Default)]
 pub struct Simulation<P: Particle> {
+    /// All individual simulations.
+    ///
+    /// # Invariants:
+    /// - All internal simulations must be on the same time.
     pub simulations: Vec<SimulationSingle<P>>,
+
     /// To be able to derive Debug, Clone, etc...
     _phantom: std::marker::PhantomData<P::State>,
 }
 
 /// Invariant: All internal simulations must be on the same time.
 impl<P: Particle> Simulation<P> {
+    /// Contructs a new simulation with `n` particles of the given kind.
     pub fn new(particle: P, n: usize) -> Self
     where
         P: Clone,
@@ -28,11 +35,15 @@ impl<P: Particle> Simulation<P> {
         }
     }
 
+    /// The current time of the simulation.
     pub fn time(&self) -> f64 {
         // Uses invariant that all simulations are on the same time.
-        self.simulations[0].time
+        self.simulations[0].time()
     }
 
+    /// Advances the simulation until a particular time.
+    ///
+    /// See also [`Simulation::advance_until`].
     pub fn advance_until(&mut self, t: f64)
     where
         P::State: Clone,
@@ -44,6 +55,11 @@ impl<P: Particle> Simulation<P> {
             .for_each(|sim| sim.advance_until(t))
     }
 
+    /// Collects a vector of the states of all simulations at a particular time.
+    ///
+    /// Returns [`None`] if it's outside of the simulated time-range.
+    ///
+    /// Calling this function at time = [`Self::time`] is guarantedd to return [`Some`].
     pub fn states_at_time(&self, time: f64) -> Option<Vec<&P::State>> {
         self.simulations
             .iter()
@@ -51,15 +67,19 @@ impl<P: Particle> Simulation<P> {
             .collect()
     }
 
-    pub fn sample(&self, samples: usize) -> impl Iterator<Item = Vec<&P::State>> {
-        let step = self.time() / samples as f64;
+    /// Takes `n` evenly spaced samples between `0` and [`Self::time`], using
+    /// [`Self::states_at_time`].
+    pub fn sample(&self, n: usize) -> impl Iterator<Item = Vec<&P::State>> {
+        let step = self.time() / n as f64;
 
-        (0..samples).map(move |i| {
+        (0..n).map(move |i| {
             self.states_at_time(i as f64 * step)
                 .expect("We are within the bounds of 0 and simulation time")
         })
     }
 
+    /// Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
+    /// commonly denoted with the greek theta (θ).
     pub fn last_theta(&self) -> f64
     where
         P::State: particle::Attach,
@@ -72,6 +92,7 @@ impl<P: Particle> Simulation<P> {
             / self.simulations.len() as f64
     }
 
+    /// Returns the attachment percentage (theta), at evenly spaced samples (using [`Self::sample`]).
     pub fn thetas(&self, samples: usize) -> impl Iterator<Item = f64> + use<'_, P>
     where
         P::State: particle::Attach,

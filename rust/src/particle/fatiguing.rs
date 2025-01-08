@@ -2,28 +2,31 @@ use pyo3::PyResult;
 
 use super::{Event, Particle};
 
-/// # Invariants
-/// - `attached_ligands <= max_ligands`
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
-#[derive(Clone, Copy, Debug)]
-pub struct MultiLigandState {
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FatiguingState {
     #[pyo3(get, set)]
-    max_ligands: u16,
+    has_entered: bool,
 
     #[pyo3(get, set)]
     attached_ligands: u16,
 }
 
-impl super::Attach for MultiLigandState {
+impl super::Attach for FatiguingState {
     fn is_attached(&self) -> bool {
-        self.attached_ligands > 0
+        self.has_entered
     }
 }
 
-#[pyo3_stub_gen::derive::gen_stub_pymethods]
-#[pyo3::pymethods]
-impl MultiLigandState {
+impl FatiguingState {
+    pub fn toggle_entered(&self) -> Self {
+        Self {
+            has_entered: !self.has_entered,
+            ..*self
+        }
+    }
+
     pub fn bind(&self) -> Self {
         Self {
             attached_ligands: self.attached_ligands + 1,
@@ -39,14 +42,11 @@ impl MultiLigandState {
     }
 }
 
-/// A particle with many ligands, where each one can attach and dettach from the host. 
-///
-/// # Invariants
-/// - `on_rates.len() == off_rates.len()`
+/// TODO
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Debug, Default)]
-pub struct MultiLigand {
+pub struct Fatiguing {
     /// The density of receptors available to bind to.
     ///
     /// `1.0` corresponds to one receptor per ligand. But perhaps should be by unit area.
@@ -60,17 +60,27 @@ pub struct MultiLigand {
 
     /// The rates for binding. Encoded as `[1->0, 1->2, 2->3, ...]`.
     pub off_rates: Vec<f64>,
+
+    /// The rate at which an unobstructed particle enters the host.
+    pub enter_rate: f64,
+
+    /// Factor by which the entering rate decrases when a new ligand is attached.
+    pub obstruction_factor: f64,
 }
 
-impl super::Particle for MultiLigand {
-    type State = MultiLigandState;
+impl super::Particle for Fatiguing {
+    type State = FatiguingState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         let mut events = Vec::with_capacity(2);
 
         if state.attached_ligands < self.max_ligands() {
             let rate = self.on_rates[state.attached_ligands as usize]
-                * if state.attached_ligands == 0 { self.receptor_density } else { 1.0 }
+                * if state.attached_ligands == 0 {
+                    self.receptor_density
+                } else {
+                    1.0
+                }
                 * self.binding_strength;
 
             events.push(Event {
@@ -86,26 +96,36 @@ impl super::Particle for MultiLigand {
             });
         }
 
+        if !state.has_entered {
+            let obstruction = self.obstruction_factor.powi(state.attached_ligands as i32);
+            events.push(Event {
+                rate: self.enter_rate * obstruction * self.receptor_density,
+                transition: Self::State::toggle_entered,
+            });
+        }
+
         events
     }
 
     fn new_state(&self) -> Self::State {
-        MultiLigandState {
+        FatiguingState {
             attached_ligands: 0,
-            max_ligands: self.max_ligands(),
+            has_entered: false,
         }
     }
 }
 
 #[pyo3_stub_gen::derive::gen_stub_pymethods]
 #[pyo3::pymethods]
-impl MultiLigand {
+impl Fatiguing {
     #[new]
     fn new(
         receptor_density: f64,
         binding_strength: f64,
         on_rates: Vec<f64>,
         off_rates: Vec<f64>,
+        enter_rate: f64,
+        obstruction_factor: f64,
     ) -> PyResult<Self> {
         if on_rates.len() != off_rates.len() {
             return Err(pyo3::exceptions::PyValueError::new_err(
@@ -113,11 +133,17 @@ impl MultiLigand {
             ));
         }
 
+        if obstruction_factor >= 1.0 {
+            println!("WARNING: `obstruction_factor` should probably be less than 1.0 (is {obstruction_factor})");
+        }
+
         Ok(Self {
             receptor_density,
             binding_strength,
             on_rates,
             off_rates,
+            enter_rate,
+            obstruction_factor,
         })
     }
 
@@ -126,18 +152,18 @@ impl MultiLigand {
         self.on_rates.len() as u16
     }
 
-    fn simulate(&self) -> MultiLigandSimulationSingle {
-        MultiLigandSimulationSingle::new(self.clone())
+    fn simulate(&self) -> FatiguingSimulationSingle {
+        FatiguingSimulationSingle::new(self.clone())
     }
 
-    fn simulate_many(&self, n: usize) -> MultiLigandSimulation {
-        MultiLigandSimulation::new(self.clone(), n)
+    fn simulate_many(&self, n: usize) -> FatiguingSimulation {
+        FatiguingSimulation::new(self.clone(), n)
     }
 }
 
 crate::monomorphize!(
-    MultiLigand,
-    MultiLigandSimulation,
-    MultiLigandSimulationSingle,
-    MultiLiagndTransition
+    Fatiguing,
+    FatiguingSimulation,
+    FatiguingSimulationSingle,
+    FatiguingTransition
 );

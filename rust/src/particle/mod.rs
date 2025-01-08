@@ -1,10 +1,16 @@
+//! Particle implementations
+
+// mod fatiguing;
+mod interfering;
 mod mono_ligand;
 mod multi_ligand;
-mod interfering;
+// mod walker;
 
+// pub use fatiguing::Fatiguing;
+pub use interfering::Interfering;
 pub use mono_ligand::MonoLigand;
 pub use multi_ligand::MultiLigand;
-pub use interfering::Interfering;
+// pub use walker::Walker;
 
 use color_eyre::eyre;
 
@@ -14,6 +20,10 @@ pub trait Attach {
     fn is_attached(&self) -> bool;
 }
 
+/// Trait representing a nano-particle that can be simulated using [`crate::simulation`].
+///
+/// It has the state of the particle as an associated type, and two required methods for returing a
+/// list of events for each state and for generating new states. 
 pub trait Particle {
     /// A type that represents the state that the particle can be in.
     type State;
@@ -67,12 +77,21 @@ pub trait Particle {
     }
 }
 
+/// A transition that happens at some rate. 
 #[derive(Clone, Copy, Debug)]
 pub struct Event<State> {
+    /// The amount of times that this event occurs per unit time. 
     pub rate: f64,
+
+    /// The transition that occurs. 
+    ///
+    /// Note that this is different from [`crate::simulation::Transition`]. This is just a function
+    /// from one state to another, the other has a timestamp and only stores the target. Now that
+    /// I'm writing this, I'm not sure if there is a reason to keep the separate...
     pub transition: fn(&State) -> State,
 }
 
+/// Generates concrete types from the generic types, for use in Python. 
 #[macro_export]
 macro_rules! monomorphize {
     ($type:path, $simulation:ident, $simulation_single:ident, $transition:ident) => {

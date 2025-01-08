@@ -5,14 +5,17 @@ use super::Transition;
 /// A simulation of a single particle
 #[derive(Clone, Debug, Default)]
 pub struct SimulationSingle<P: Particle> {
+    /// The particle to be simulated.
     pub particle: P,
-    pub time: f64,
-    pub next_transition: Transition<P::State>,
-    pub transition_history: Vec<Transition<P::State>>,
+
+    pub(crate) next_transition: Transition<P::State>,
+    pub(crate) transition_history: Vec<Transition<P::State>>,
+    time: f64,
 }
 
 // Public API for Python
 impl<P: Particle> SimulationSingle<P> {
+    /// Constructs a new simulation with the given particle. 
     pub fn new(particle: P) -> Self {
         let initial_state = particle.new_state();
 
@@ -27,6 +30,14 @@ impl<P: Particle> SimulationSingle<P> {
         }
     }
 
+    /// The current time of the simulation. 
+    pub const fn time(&self) -> f64 {
+        self.time
+    }
+
+    /// Advances the simulation until at least time `t`. 
+    ///
+    /// If the time is already more than `t`, the simulation doesn't advance. 
     pub fn advance_until(&mut self, t: f64)
     where
         P::State: Clone,
@@ -50,6 +61,7 @@ impl<P: Particle> SimulationSingle<P> {
         self.time = t;
     }
 
+    /// Makes a new [`Simulation`](super::Simulation) with `n` particles of the current kind.
     pub fn multiple(self, n: usize) -> super::Simulation<P>
     where
         P: Clone,
