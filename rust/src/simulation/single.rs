@@ -1,3 +1,5 @@
+use color_eyre::eyre;
+
 use crate::particle::Particle;
 
 use super::Transition;
@@ -15,7 +17,7 @@ pub struct SimulationSingle<P: Particle> {
 
 // Public API for Python
 impl<P: Particle> SimulationSingle<P> {
-    /// Constructs a new simulation with the given particle. 
+    /// Constructs a new simulation with the given particle.
     pub fn new(particle: P) -> Self {
         let initial_state = particle.new_state();
 
@@ -30,15 +32,15 @@ impl<P: Particle> SimulationSingle<P> {
         }
     }
 
-    /// The current time of the simulation. 
+    /// The current time of the simulation.
     pub const fn time(&self) -> f64 {
         self.time
     }
 
-    /// Advances the simulation until at least time `t`. 
+    /// Advances the simulation until at least time `t`.
     ///
-    /// If the time is already more than `t`, the simulation doesn't advance. 
-    pub fn advance_until(&mut self, t: f64)
+    /// If the time is already more than `t`, the simulation doesn't advance.
+    pub fn advance_until(&mut self, t: f64) -> eyre::Result<()>
     where
         P::State: Clone,
     {
@@ -47,8 +49,7 @@ impl<P: Particle> SimulationSingle<P> {
             self.transition_history.push(self.next_transition.clone());
             let (next_state, delta_t) = self
                 .particle
-                .advance_state(&self.next_transition.state)
-                .unwrap();
+                .advance_state(&self.next_transition.state)?;
 
             self.next_transition = Transition {
                 state: next_state,
@@ -59,6 +60,7 @@ impl<P: Particle> SimulationSingle<P> {
         }
 
         self.time = t;
+        Ok(())
     }
 
     /// Makes a new [`Simulation`](super::Simulation) with `n` particles of the current kind.
@@ -71,7 +73,7 @@ impl<P: Particle> SimulationSingle<P> {
     }
 }
 
-// Private API for Python
+// Private API for Python (i.e., not available in Python)
 impl<P: Particle> SimulationSingle<P> {
     /// The last transition that had occurrured at the given time.
     ///
@@ -119,7 +121,7 @@ mod tests {
         };
 
         let mut sim = SimulationSingle::new(particle);
-        sim.advance_until(1.0);
+        sim.advance_until(1.0).unwrap();
         sim.state_at_time(0.0).unwrap();
     }
 }

@@ -135,8 +135,8 @@ macro_rules! monomorphize {
                 self.inner.last_theta()
             }
 
-            pub fn advance_until(&mut self, t: f64) {
-                self.inner.advance_until(t);
+            pub fn advance_until(&mut self, t: f64) -> pyo3::PyResult<()> {
+                self.inner.advance_until(t).map_err(|err| pyo3::exceptions::PyException::new_err(err.to_string()))
             }
         }
 
@@ -165,8 +165,8 @@ macro_rules! monomorphize {
                     .collect()
             }
 
-            pub fn advance_until(&mut self, t: f64) {
-                self.inner.advance_until(t);
+            pub fn advance_until(&mut self, t: f64) -> pyo3::PyResult<()> {
+                self.inner.advance_until(t).map_err(|err| pyo3::exceptions::PyException::new_err(err.to_string()))
             }
         }
 

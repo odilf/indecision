@@ -1,3 +1,4 @@
+use color_eyre::eyre;
 use rayon::prelude::*;
 
 use crate::particle::{self, Attach as _, Particle};
@@ -44,7 +45,7 @@ impl<P: Particle> Simulation<P> {
     /// Advances the simulation until a particular time.
     ///
     /// See also [`Simulation::advance_until`].
-    pub fn advance_until(&mut self, t: f64)
+    pub fn advance_until(&mut self, t: f64) -> eyre::Result<()>
     where
         P::State: Clone,
         P: Send + Sync,
@@ -52,7 +53,8 @@ impl<P: Particle> Simulation<P> {
     {
         self.simulations
             .par_iter_mut()
-            .for_each(|sim| sim.advance_until(t))
+            .map(|sim| sim.advance_until(t))
+            .collect()
     }
 
     /// Collects a vector of the states of all simulations at a particular time.
