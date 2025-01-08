@@ -5,19 +5,19 @@ use super::{Attach, Event, Particle};
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct EnteringState {
+pub struct InterferingState {
     has_entered: bool,
     attached_ligands: u16,
     max_ligands: u16,
 }
 
-impl super::Attach for EnteringState {
+impl super::Attach for InterferingState {
     fn is_attached(&self) -> bool {
         self.has_entered
     }
 }
 
-impl EnteringState {
+impl InterferingState {
     pub fn toggle_entered(&self) -> Self {
         Self {
             has_entered: !self.has_entered,
@@ -47,7 +47,7 @@ impl EnteringState {
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Debug, Default)]
-pub struct Entering {
+pub struct Interfering {
     /// The density of receptors available to bind to.
     ///
     /// `1.0` corresponds to one receptor per ligand. But perhaps should be by unit area.
@@ -69,8 +69,8 @@ pub struct Entering {
     pub obstruction_factor: f64,
 }
 
-impl super::Particle for Entering {
-    type State = EnteringState;
+impl super::Particle for Interfering {
+    type State = InterferingState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         let mut events = Vec::with_capacity(2);
@@ -109,7 +109,7 @@ impl super::Particle for Entering {
     }
 
     fn new_state(&self) -> Self::State {
-        EnteringState {
+        InterferingState {
             attached_ligands: 0,
             has_entered: false,
             max_ligands: self.max_ligands(),
@@ -119,7 +119,7 @@ impl super::Particle for Entering {
 
 #[pyo3_stub_gen::derive::gen_stub_pymethods]
 #[pyo3::pymethods]
-impl Entering {
+impl Interfering {
     #[new]
     fn new(
         receptor_density: f64,
@@ -154,18 +154,18 @@ impl Entering {
         self.on_rates.len() as u16
     }
 
-    fn simulate(&self) -> EnteringSimulationSingle {
-        EnteringSimulationSingle::new(self.clone())
+    fn simulate(&self) -> InterferingSimulationSingle {
+        InterferingSimulationSingle::new(self.clone())
     }
 
-    fn simulate_many(&self, n: usize) -> EnteringSimulation {
-        EnteringSimulation::new(self.clone(), n)
+    fn simulate_many(&self, n: usize) -> InterferingSimulation {
+        InterferingSimulation::new(self.clone(), n)
     }
 }
 
 crate::monomorphize!(
-    Entering,
-    EnteringSimulation,
-    EnteringSimulationSingle,
-    EnteringTransition
+    Interfering,
+    InterferingSimulation,
+    InterferingSimulationSingle,
+    InterferingTransition
 );

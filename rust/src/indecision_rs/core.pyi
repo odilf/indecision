@@ -3,7 +3,7 @@
 
 import typing
 
-class Entering:
+class Interfering:
     r"""
     A multi-valent particle that can attach and enter a host. 
     
@@ -14,16 +14,16 @@ class Entering:
     def max_ligands(self) -> int:
         ...
 
-    def simulate(self) -> EnteringSimulationSingle:
+    def simulate(self) -> InterferingSimulationSingle:
         ...
 
-    def simulate_many(self, n:int) -> EnteringSimulation:
+    def simulate_many(self, n:int) -> InterferingSimulation:
         ...
 
 
-class EnteringSimulation:
-    def __new__(cls,particle:Entering, n:int): ...
-    def sample(self, samples:int) -> list[list[EnteringState]]:
+class InterferingSimulation:
+    def __new__(cls,particle:Interfering, n:int): ...
+    def sample(self, samples:int) -> list[list[InterferingState]]:
         ...
 
     def thetas(self, samples:int) -> list[float]:
@@ -36,19 +36,19 @@ class EnteringSimulation:
         ...
 
 
-class EnteringSimulationSingle:
-    transition_history: list[EnteringTransition]
-    def __new__(cls,particle:Entering): ...
+class InterferingSimulationSingle:
+    transition_history: list[InterferingTransition]
+    def __new__(cls,particle:Interfering): ...
     def advance_until(self, t:float) -> None:
         ...
 
 
-class EnteringState:
+class InterferingState:
     ...
 
-class EnteringTransition:
+class InterferingTransition:
     time: float
-    state: EnteringState
+    state: InterferingState
 
 class MonoLiagndTransition:
     time: float

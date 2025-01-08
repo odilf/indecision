@@ -1,3 +1,3 @@
-from indecision_rs.core import MonoLigand, MultiLigand, Entering
+from indecision_rs.core import MonoLigand, MultiLigand, Interfering
 
-__all__ = ["MonoLigand", "MultiLigand", "Entering"]
+__all__ = ["MonoLigand", "MultiLigand", "Interfering"]
