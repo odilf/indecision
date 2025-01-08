@@ -107,7 +107,7 @@ macro_rules! monomorphize {
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
         pub struct $simulation {
-            pub inner: crate::simulation::Simulation<$type>,
+            pub inner: $crate::simulation::Simulation<$type>,
         }
 
         #[pyo3_stub_gen::derive::gen_stub_pymethods]
@@ -116,7 +116,7 @@ macro_rules! monomorphize {
             #[new]
             pub fn new(particle: $type, n: usize) -> Self {
                 Self {
-                    inner: crate::simulation::Simulation::new(particle, n),
+                    inner: $crate::simulation::Simulation::new(particle, n),
                 }
             }
 
@@ -143,7 +143,7 @@ macro_rules! monomorphize {
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
         pub struct $simulation_single {
-            pub inner: crate::simulation::SimulationSingle<$type>,
+            pub inner: $crate::simulation::SimulationSingle<$type>,
         }
 
         #[pyo3_stub_gen::derive::gen_stub_pymethods]
@@ -152,7 +152,7 @@ macro_rules! monomorphize {
             #[new]
             pub fn new(particle: $type) -> Self {
                 Self {
-                    inner: crate::simulation::SimulationSingle::new(particle),
+                    inner: $crate::simulation::SimulationSingle::new(particle),
                 }
             }
 
@@ -173,7 +173,7 @@ macro_rules! monomorphize {
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
         pub struct $transition {
-            pub inner: crate::simulation::Transition<<$type as Particle>::State>,
+            pub inner: $crate::simulation::Transition<<$type as Particle>::State>,
         }
 
         #[pyo3_stub_gen::derive::gen_stub_pymethods]
