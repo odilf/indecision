@@ -6,7 +6,10 @@ use super::{Attach, Event, Particle};
 #[pyo3::pyclass]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct InterferingState {
+    #[pyo3(get, set)]
     has_entered: bool,
+
+    #[pyo3(get, set)]
     attached_ligands: u16,
     max_ligands: u16,
 }
