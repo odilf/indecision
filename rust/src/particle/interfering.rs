@@ -1,6 +1,6 @@
 use pyo3::PyResult;
 
-use super::{Attach, Event, Particle};
+use super::{Event, Particle};
 
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
@@ -11,7 +11,6 @@ pub struct InterferingState {
 
     #[pyo3(get, set)]
     attached_ligands: u16,
-    max_ligands: u16,
 }
 
 impl super::Attach for InterferingState {
@@ -115,7 +114,6 @@ impl super::Particle for Interfering {
         InterferingState {
             attached_ligands: 0,
             has_entered: false,
-            max_ligands: self.max_ligands(),
         }
     }
 }
