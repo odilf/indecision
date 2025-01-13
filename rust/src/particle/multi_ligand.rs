@@ -1,5 +1,7 @@
 use pyo3::PyResult;
 
+use crate::simulation::markov::MarkovChain;
+
 use super::{Event, Particle};
 
 /// # Invariants
@@ -39,7 +41,7 @@ impl MultiLigandState {
     }
 }
 
-/// A particle with many ligands, where each one can attach and dettach from the host. 
+/// A particle with many ligands, where each one can attach and dettach from the host.
 ///
 /// # Invariants
 /// - `on_rates.len() == off_rates.len()`
@@ -70,19 +72,23 @@ impl super::Particle for MultiLigand {
 
         if state.attached_ligands < self.max_ligands() {
             let rate = self.on_rates[state.attached_ligands as usize]
-                * if state.attached_ligands == 0 { self.receptor_density } else { 1.0 }
+                * if state.attached_ligands == 0 {
+                    self.receptor_density
+                } else {
+                    1.0
+                }
                 * self.binding_strength;
 
             events.push(Event {
                 rate,
-                transition: Self::State::bind,
+                target: state.bind(),
             });
         }
 
         if state.attached_ligands > 0 {
             events.push(Event {
                 rate: self.off_rates[state.attached_ligands as usize - 1],
-                transition: Self::State::unbind,
+                target: state.unbind(),
             });
         }
 
@@ -97,46 +103,45 @@ impl super::Particle for MultiLigand {
     }
 }
 
-#[pyo3_stub_gen::derive::gen_stub_pymethods]
-#[pyo3::pymethods]
-impl MultiLigand {
-    #[new]
-    fn new(
-        receptor_density: f64,
-        binding_strength: f64,
-        on_rates: Vec<f64>,
-        off_rates: Vec<f64>,
-    ) -> PyResult<Self> {
-        if on_rates.len() != off_rates.len() {
-            return Err(pyo3::exceptions::PyValueError::new_err(
-                "on_rates and off_rates must have the same length",
-            ));
+impl MarkovChain for MultiLigand {
+    fn states(&self) -> Vec<Self::State> {
+        let mut output = Vec::with_capacity(2 * self.max_ligands() as usize);
+        for attached_ligands in 0..=self.max_ligands() {
+            output.push(Self::State { attached_ligands, max_ligands: self.max_ligands() });
         }
 
-        Ok(Self {
-            receptor_density,
-            binding_strength,
-            on_rates,
-            off_rates,
-        })
-    }
-
-    fn max_ligands(&self) -> u16 {
-        assert_eq!(self.on_rates.len(), self.off_rates.len());
-        self.on_rates.len() as u16
-    }
-
-    fn simulate(&self) -> MultiLigandSimulationSingle {
-        MultiLigandSimulationSingle::new(self.clone())
-    }
-
-    fn simulate_many(&self, n: usize) -> MultiLigandSimulation {
-        MultiLigandSimulation::new(self.clone(), n)
+        output
     }
 }
 
 crate::monomorphize!(
-    MultiLigand,
+    MultiLigand {
+        #[new]
+        fn new(
+            receptor_density: f64,
+            binding_strength: f64,
+            on_rates: Vec<f64>,
+            off_rates: Vec<f64>,
+        ) -> PyResult<Self> {
+            if on_rates.len() != off_rates.len() {
+                return Err(pyo3::exceptions::PyValueError::new_err(
+                    "on_rates and off_rates must have the same length",
+                ));
+            }
+
+            Ok(Self {
+                receptor_density,
+                binding_strength,
+                on_rates,
+                off_rates,
+            })
+        }
+
+        fn max_ligands(&self) -> u16 {
+            assert_eq!(self.on_rates.len(), self.off_rates.len());
+            self.on_rates.len() as u16
+        }
+    },
     MultiLigandSimulation,
     MultiLigandSimulationSingle,
     MultiLiagndTransition

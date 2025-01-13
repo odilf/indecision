@@ -26,7 +26,7 @@ impl<P: Particle> SimulationSingle<P> {
             time: 0.0,
             next_transition: Transition {
                 time: 0.0,
-                state: initial_state,
+                target: initial_state,
             },
             transition_history: Vec::new(),
         }
@@ -49,10 +49,10 @@ impl<P: Particle> SimulationSingle<P> {
             self.transition_history.push(self.next_transition.clone());
             let (next_state, delta_t) = self
                 .particle
-                .advance_state(&self.next_transition.state)?;
+                .advance_state(&self.next_transition.target)?;
 
             self.next_transition = Transition {
-                state: next_state,
+                target: next_state,
                 time: self.time + delta_t,
             };
 
@@ -102,7 +102,7 @@ impl<P: Particle> SimulationSingle<P> {
 
     /// The state of the particle at the given time.
     pub fn state_at_time(&self, time: f64) -> Option<&P::State> {
-        Some(&self.last_transition_at_time(time)?.state)
+        Some(&self.last_transition_at_time(time)?.target)
     }
 }
 

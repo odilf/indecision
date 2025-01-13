@@ -1,5 +1,7 @@
 use pyo3::PyResult;
 
+use crate::simulation::markov::MarkovChain;
+
 use super::{Event, Particle};
 
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
@@ -42,10 +44,10 @@ impl InterferingState {
     }
 }
 
-/// A multi-valent particle that can attach and enter a host. 
+/// A multi-valent particle that can attach and enter a host.
 ///
 /// Ligands obtruct the particle from entering, where for each additional attached ligand,
-/// the entering rate is decreased by a constant factor. 
+/// the entering rate is decreased by a constant factor.
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Debug, Default)]
@@ -88,14 +90,14 @@ impl super::Particle for Interfering {
 
             events.push(Event {
                 rate,
-                transition: Self::State::bind,
+                target: state.bind(),
             });
         }
 
         if state.attached_ligands > 0 {
             events.push(Event {
                 rate: self.off_rates[state.attached_ligands as usize - 1],
-                transition: Self::State::unbind,
+                target: state.unbind(),
             });
         }
 
@@ -103,7 +105,7 @@ impl super::Particle for Interfering {
             let obstruction = self.obstruction_factor.powi(state.attached_ligands as i32);
             events.push(Event {
                 rate: self.enter_rate * obstruction * self.receptor_density,
-                transition: Self::State::toggle_entered,
+                target: state.toggle_entered(),
             });
         }
 
@@ -118,54 +120,58 @@ impl super::Particle for Interfering {
     }
 }
 
-#[pyo3_stub_gen::derive::gen_stub_pymethods]
-#[pyo3::pymethods]
-impl Interfering {
-    #[new]
-    fn new(
-        receptor_density: f64,
-        binding_strength: f64,
-        on_rates: Vec<f64>,
-        off_rates: Vec<f64>,
-        enter_rate: f64,
-        obstruction_factor: f64,
-    ) -> PyResult<Self> {
-        if on_rates.len() != off_rates.len() {
-            return Err(pyo3::exceptions::PyValueError::new_err(
-                "on_rates and off_rates must have the same length",
-            ));
+impl MarkovChain for Interfering {
+    fn states(&self) -> Vec<Self::State> {
+        let mut output = Vec::with_capacity(2 * self.max_ligands() as usize);
+        for has_entered in [true, false] {
+            for attached_ligands in 0..=self.max_ligands() {
+                output.push(Self::State {
+                    has_entered,
+                    attached_ligands,
+                });
+            }
         }
 
-        if obstruction_factor >= 1.0 {
-            println!("WARNING: `obstruction_factor` should probably be less than 1.0 (is {obstruction_factor})");
-        }
-
-        Ok(Self {
-            receptor_density,
-            binding_strength,
-            on_rates,
-            off_rates,
-            enter_rate,
-            obstruction_factor,
-        })
-    }
-
-    fn max_ligands(&self) -> u16 {
-        assert_eq!(self.on_rates.len(), self.off_rates.len());
-        self.on_rates.len() as u16
-    }
-
-    fn simulate(&self) -> InterferingSimulationSingle {
-        InterferingSimulationSingle::new(self.clone())
-    }
-
-    fn simulate_many(&self, n: usize) -> InterferingSimulation {
-        InterferingSimulation::new(self.clone(), n)
+        output
     }
 }
 
 crate::monomorphize!(
-    Interfering,
+    Interfering {
+        #[new]
+        fn new(
+            receptor_density: f64,
+            binding_strength: f64,
+            on_rates: Vec<f64>,
+            off_rates: Vec<f64>,
+            enter_rate: f64,
+            obstruction_factor: f64,
+        ) -> PyResult<Self> {
+            if on_rates.len() != off_rates.len() {
+                return Err(pyo3::exceptions::PyValueError::new_err(
+                    "on_rates and off_rates must have the same length",
+                ));
+            }
+
+            if obstruction_factor >= 1.0 {
+                println!("WARNING: `obstruction_factor` should probably be less than 1.0 (is {obstruction_factor})");
+            }
+
+            Ok(Self {
+                receptor_density,
+                binding_strength,
+                on_rates,
+                off_rates,
+                enter_rate,
+                obstruction_factor,
+            })
+        }
+
+        fn max_ligands(&self) -> u16 {
+            assert_eq!(self.on_rates.len(), self.off_rates.len());
+            self.on_rates.len() as u16
+        }
+    },
     InterferingSimulation,
     InterferingSimulationSingle,
     InterferingTransition

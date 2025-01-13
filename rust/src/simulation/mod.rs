@@ -2,6 +2,7 @@
 
 mod single;
 mod many;
+pub mod markov;
 
 pub use single::SimulationSingle;
 pub use many::Simulation;
@@ -13,5 +14,5 @@ pub struct Transition<State> {
     pub time: f64,
 
     /// The state that it was transitioned to.
-    pub state: State,
+    pub target: State,
 }

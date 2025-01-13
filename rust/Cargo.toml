@@ -15,6 +15,8 @@ numpy = "0.23.0"
 pyo3-stub-gen = { git = "https://github.com/Jij-Inc/pyo3-stub-gen.git" }
 env_logger = "0.11.5"
 rayon = "1.10.0"
+ndarray = "0.16.1"
+rust-numpy = "0.1.0"
 
 [build-dependencies]
 pyo3-build-config = "0.23.2"

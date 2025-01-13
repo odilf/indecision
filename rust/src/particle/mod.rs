@@ -14,7 +14,7 @@ pub use multi_ligand::MultiLigand;
 
 use color_eyre::eyre;
 
-/// Particles that can output a binary "I'm attached" or "I'm not attached". 
+/// Particles that can output a binary "I'm attached" or "I'm not attached".
 pub trait Attach {
     /// Whether to count the particle as attached to the receptor or not.
     fn is_attached(&self) -> bool;
@@ -23,7 +23,7 @@ pub trait Attach {
 /// Trait representing a nano-particle that can be simulated using [`crate::simulation`].
 ///
 /// It has the state of the particle as an associated type, and two required methods for returing a
-/// list of events for each state and for generating new states. 
+/// list of events for each state and for generating new states.
 pub trait Particle {
     /// A type that represents the state that the particle can be in.
     type State;
@@ -31,8 +31,32 @@ pub trait Particle {
     /// Returns the possible events that can happen to the particle in the current state
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>>;
 
-    /// Create a new state initial for the particle. 
+    /// Create a new state initial for the particle.
     fn new_state(&self) -> Self::State;
+
+    /// A list of probabilities for each possible next state.
+    ///
+    /// If a state is not contained in the list it can be assumed is 0.
+    fn event_probabilities(&self, state: &Self::State) -> eyre::Result<Vec<(Self::State, f64)>> {
+        let events = self.events(state);
+        if events.is_empty() {
+            eyre::bail!("No events to process");
+        }
+
+        let total_rate = events.iter().map(|e| e.rate).sum::<f64>();
+        if total_rate == 0.0 {
+            eyre::bail!("Total rate of events is 0, no transitions are possible");
+        };
+
+        // TODO: We could leave this as an iterator. I didn't because the generics where being a
+        // pain.
+        let output = events
+            .into_iter()
+            .map(move |event| (event.target, event.rate / total_rate))
+            .collect();
+
+        Ok(output)
+    }
 
     /// Advances in-place the state of a particle, and returns the time elapsed to make that transition.
     fn advance_state(&self, state: &Self::State) -> eyre::Result<(Self::State, f64)> {
@@ -53,7 +77,7 @@ pub trait Particle {
         for event in events {
             cumulative_rate += event.rate;
             if cumulative_rate > r {
-                let next_state = (event.transition)(state);
+                let next_state = event.target;
                 return Ok((next_state, delta_t));
             }
         }
@@ -68,7 +92,7 @@ pub trait Particle {
         unsafe { std::hint::unreachable_unchecked() }
     }
 
-    /// Creates a simulation object for this particle. 
+    /// Creates a simulation object for this particle.
     fn simulation(self) -> crate::simulation::SimulationSingle<Self>
     where
         Self: Sized,
@@ -77,32 +101,55 @@ pub trait Particle {
     }
 }
 
-/// A transition that happens at some rate. 
+/// A transition that happens at some rate.
 #[derive(Clone, Copy, Debug)]
 pub struct Event<State> {
-    /// The amount of times that this event occurs per unit time. 
+    /// The amount of times that this event occurs per unit time.
     pub rate: f64,
 
-    /// The transition that occurs. 
-    ///
-    /// Note that this is different from [`crate::simulation::Transition`]. This is just a function
-    /// from one state to another, the other has a timestamp and only stores the target. Now that
-    /// I'm writing this, I'm not sure if there is a reason to keep the separate...
-    pub transition: fn(&State) -> State,
+    /// The state after the transition.
+    pub target: State,
 }
 
-/// Generates concrete types from the generic types, for use in Python. 
+/// Generates concrete types from the generic types, for use in Python.
+///
+/// Note: All doc-comments have to be manually copied from the implementation and kept up-to-date.
 #[macro_export]
 macro_rules! monomorphize {
-    ($type:path, $simulation:ident, $simulation_single:ident, $transition:ident) => {
-        // Conflicting methods, has to be added manually :(
-        // #[pyo3_stub_gen::derive::gen_stub_pymethods]
-        // #[pyo3::pymethods]
-        // impl $type {
-        //     fn simulation(&self) -> $simulation_single {
-        //         $simulation_single::new(*self)
-        //     }
-        // }
+    ($type:path $({ $($impls:tt)* })?, $simulation:ident, $simulation_single:ident, $transition:ident $(,)?) => {
+        #[pyo3_stub_gen::derive::gen_stub_pymethods]
+        #[pyo3::pymethods]
+        impl $type {
+            /// Create a new single-particle simulation from this particle.
+            fn simulate(&self) -> $simulation_single {
+                $simulation_single::new(self.clone())
+            }
+
+            /// Create a new `n`-particle simulation from this particle.
+            fn simulate_many(&self, n: usize) -> $simulation {
+                $simulation::new(self.clone(), n)
+            }
+
+            #[pyo3(name = "states")]
+            fn states_python(&self) -> Vec<<$type as Particle>::State> {
+                $crate::simulation::markov::MarkovChain::states(self)
+            }
+
+            /// A list of probabilities for each possible next state.
+            ///
+            /// If a state is not contained in the list it can be assumed is 0.
+            #[pyo3(name = "event_probabilities")]
+            fn event_probabilities_python(
+                &self, 
+                state: &<$type as Particle>::State
+            ) -> pyo3::PyResult<Vec<(<$type as Particle>::State, f64)>> {
+                self.event_probabilities(state)
+                    .map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
+            }
+
+            $($($impls)*)?
+        }
+
 
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
@@ -113,6 +160,7 @@ macro_rules! monomorphize {
         #[pyo3_stub_gen::derive::gen_stub_pymethods]
         #[pyo3::pymethods]
         impl $simulation {
+            /// Constructs a new simulation of this particle.
             #[new]
             pub fn new(particle: $type, n: usize) -> Self {
                 Self {
@@ -120,6 +168,7 @@ macro_rules! monomorphize {
                 }
             }
 
+            ///
             pub fn sample(&self, samples: usize) -> Vec<Vec<<$type as Particle>::State>> {
                 self.inner
                     .sample(samples)
@@ -136,7 +185,7 @@ macro_rules! monomorphize {
             }
 
             pub fn advance_until(&mut self, t: f64) -> pyo3::PyResult<()> {
-                self.inner.advance_until(t).map_err(|err| pyo3::exceptions::PyException::new_err(err.to_string()))
+                self.inner.advance_until(t).map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
             }
         }
 
@@ -187,8 +236,8 @@ macro_rules! monomorphize {
 
             #[getter]
             /// The state that it was transitioned _to_.
-            pub fn state(&self) -> <$type as Particle>::State {
-                self.inner.state
+            pub fn target(&self) -> <$type as Particle>::State {
+                self.inner.target
             }
         }
     };

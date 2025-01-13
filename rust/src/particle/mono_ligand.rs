@@ -1,3 +1,5 @@
+use crate::simulation::markov::MarkovChain;
+
 use super::{Event, Particle};
 
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
@@ -36,13 +38,13 @@ pub struct MonoLigand {
     /// Density of receptors relative to the number of particles.
     pub receptor_density: f64,
 
-    /// The strength the particle binds with. 
+    /// The strength the particle binds with.
     pub binding_strength: f64,
 
     /// Rate at which the particle binds.
     pub on_rate: f64,
 
-    /// Rate at which the particle unbinds. 
+    /// Rate at which the particle unbinds.
     pub off_rate: f64,
 }
 
@@ -53,12 +55,12 @@ impl super::Particle for MonoLigand {
         if state.is_attached {
             vec![Event {
                 rate: self.off_rate,
-                transition: |state| state.toggle(),
+                target: state.toggle(),
             }]
         } else {
             vec![Event {
                 rate: self.on_rate * self.receptor_density * self.binding_strength,
-                transition: |state| state.toggle(),
+                target: state.toggle(),
             }]
         }
     }
@@ -68,31 +70,28 @@ impl super::Particle for MonoLigand {
     }
 }
 
-#[pyo3_stub_gen::derive::gen_stub_pymethods]
-#[pyo3::pymethods]
-impl MonoLigand {
-    #[new]
-    fn new(receptor_density: f64, binding_strength: f64, on_rate: f64, off_rate: f64) -> Self {
-        Self {
-            receptor_density,
-            binding_strength,
-            on_rate,
-            off_rate,
-        }
-    }
-
-    fn simulate(&self) -> MonoLigandSimulationSingle {
-        MonoLigandSimulationSingle::new(*self)
-    }
-
-    fn simulate_many(&self, n: usize) -> MonoLigandSimulation {
-        MonoLigandSimulation::new(*self, n)
+impl MarkovChain for MonoLigand {
+    fn states(&self) -> Vec<Self::State> {
+        vec![
+            Self::State { is_attached: true },
+            Self::State { is_attached: false },
+        ]
     }
 }
 
 crate::monomorphize!(
-    MonoLigand,
-    MonoLigandSimulation,
-    MonoLigandSimulationSingle,
-    MonoLiagndTransition
+        MonoLigand {
+            #[new]
+            fn new(receptor_density: f64, binding_strength: f64, on_rate: f64, off_rate: f64) -> Self {
+                Self {
+                    receptor_density,
+                    binding_strength,
+                    on_rate,
+                    off_rate,
+                }
+            }
+        },
+        MonoLigandSimulation,
+        MonoLigandSimulationSingle,
+        MonoLiagndTransition,
 );

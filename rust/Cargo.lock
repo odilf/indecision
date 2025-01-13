@@ -262,17 +262,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
+name = "impl_ops"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90f97a5f38dd3ccfbe7aa80f4a0c00930f21b922c74195be0201c51028f22dcf"
+
+[[package]]
 name = "indecision_rs"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
  "env_logger",
+ "ndarray",
  "numpy",
  "pyo3",
  "pyo3-build-config",
  "pyo3-stub-gen",
  "rand",
  "rayon",
+ "rust-numpy",
 ]
 
 [[package]]
@@ -677,6 +685,15 @@ name = "regex-syntax"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
+
+[[package]]
+name = "rust-numpy"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7867112124dcd4b9209d74c4748e10566035a3bd3d55b96d32a7b9bce328b7cb"
+dependencies = [
+ "impl_ops",
+]
 
 [[package]]
 name = "rustc-demangle"

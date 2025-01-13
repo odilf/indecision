@@ -5,19 +5,36 @@ import typing
 
 class Interfering:
     r"""
-    A multi-valent particle that can attach and enter a host. 
+    A multi-valent particle that can attach and enter a host.
     
     Ligands obtruct the particle from entering, where for each additional attached ligand,
     the entering rate is decreased by a constant factor.
     """
     def __new__(cls,receptor_density:float, binding_strength:float, on_rates:typing.Sequence[float], off_rates:typing.Sequence[float], enter_rate:float, obstruction_factor:float): ...
-    def max_ligands(self) -> int:
-        ...
-
     def simulate(self) -> InterferingSimulationSingle:
+        r"""
+        Create a new single-particle simulation from this particle.
+        """
         ...
 
     def simulate_many(self, n:int) -> InterferingSimulation:
+        r"""
+        Create a new `n`-particle simulation from this particle.
+        """
+        ...
+
+    def states(self) -> list[InterferingState]:
+        ...
+
+    def event_probabilities(self, state:InterferingState) -> list[tuple[InterferingState, float]]:
+        r"""
+        A list of probabilities for each possible next state.
+        
+        If a state is not contained in the list it can be assumed is 0.
+        """
+        ...
+
+    def max_ligands(self) -> int:
         ...
 
 
@@ -44,15 +61,16 @@ class InterferingSimulationSingle:
 
 
 class InterferingState:
-    ...
+    has_entered: bool
+    attached_ligands: int
 
 class InterferingTransition:
     time: float
-    state: InterferingState
+    target: InterferingState
 
 class MonoLiagndTransition:
     time: float
-    state: MonoLigandState
+    target: MonoLigandState
 
 class MonoLigand:
     r"""
@@ -64,9 +82,26 @@ class MonoLigand:
     """
     def __new__(cls,receptor_density:float, binding_strength:float, on_rate:float, off_rate:float): ...
     def simulate(self) -> MonoLigandSimulationSingle:
+        r"""
+        Create a new single-particle simulation from this particle.
+        """
         ...
 
     def simulate_many(self, n:int) -> MonoLigandSimulation:
+        r"""
+        Create a new `n`-particle simulation from this particle.
+        """
+        ...
+
+    def states(self) -> list[MonoLigandState]:
+        ...
+
+    def event_probabilities(self, state:MonoLigandState) -> list[tuple[MonoLigandState, float]]:
+        r"""
+        A list of probabilities for each possible next state.
+        
+        If a state is not contained in the list it can be assumed is 0.
+        """
         ...
 
 
@@ -100,21 +135,40 @@ class MonoLigandState:
 
 class MultiLiagndTransition:
     time: float
-    state: MultiLigandState
+    target: MultiLigandState
 
 class MultiLigand:
     r"""
+    A particle with many ligands, where each one can attach and dettach from the host.
+    
     # Invariants
     - `on_rates.len() == off_rates.len()`
     """
     def __new__(cls,receptor_density:float, binding_strength:float, on_rates:typing.Sequence[float], off_rates:typing.Sequence[float]): ...
-    def max_ligands(self) -> int:
-        ...
-
     def simulate(self) -> MultiLigandSimulationSingle:
+        r"""
+        Create a new single-particle simulation from this particle.
+        """
         ...
 
     def simulate_many(self, n:int) -> MultiLigandSimulation:
+        r"""
+        Create a new `n`-particle simulation from this particle.
+        """
+        ...
+
+    def states(self) -> list[MultiLigandState]:
+        ...
+
+    def event_probabilities(self, state:MultiLigandState) -> list[tuple[MultiLigandState, float]]:
+        r"""
+        A list of probabilities for each possible next state.
+        
+        If a state is not contained in the list it can be assumed is 0.
+        """
+        ...
+
+    def max_ligands(self) -> int:
         ...
 
 

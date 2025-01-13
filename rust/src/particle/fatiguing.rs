@@ -161,7 +161,7 @@ impl Fatiguing {
     }
 }
 
-crate::monomorphize!(
+crate::moomorphize!(
     Fatiguing,
     FatiguingSimulation,
     FatiguingSimulationSingle,
