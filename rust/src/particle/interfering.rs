@@ -77,7 +77,11 @@ impl super::Particle for Interfering {
     type State = InterferingState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
-        let mut events = Vec::with_capacity(2);
+        if state.has_entered {
+            return Vec::new();
+        }
+
+        let mut events = Vec::with_capacity(3);
 
         if state.attached_ligands < self.max_ligands() {
             let rate = self.on_rates[state.attached_ligands as usize]
