@@ -1,4 +1,11 @@
-from indecision_rs import particle, simulate
+import logging
+import os
+
+from indecision_rs import particle
+
+FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(os.environ.get('LOGLEVEL', 'INFO') or logging.INFO)
 
 mono_ligand = particle.MonoLigand(
     receptor_density=1.0,
@@ -35,13 +42,13 @@ for p in particles:
     simulation.advance_until(1000.0)
 
     thetas = simulation.thetas(samples=1000)
-    print(f"Got {len(thetas)} values for {p}")
+    logging.debug(f"Got {len(thetas)} values for {p}")
 
 
     states = p.states()
-    print(f"States for {p} are {states}")
+    logging.debug(f"There are {len(states)} for {p}")
 
-    print(f"Probability of nexts states from {states[0]} is {p.event_probabilities(states[0])}")
+    logging.debug(f"Probability of nexts states is {[prob for (_, prob) in p.event_probabilities(states[0])]}")
 
-print("\nAll seems correct!")
+logging.info("\nAll seems correct!")
 

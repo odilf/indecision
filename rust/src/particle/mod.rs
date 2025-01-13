@@ -37,15 +37,12 @@ pub trait Particle {
     /// A list of probabilities for each possible next state.
     ///
     /// If a state is not contained in the list it can be assumed is 0.
+    // TODO: This doesn't need to be a result anymore (like `advance_state`).
     fn event_probabilities(&self, state: &Self::State) -> eyre::Result<Vec<(Self::State, f64)>> {
         let events = self.events(state);
-        if events.is_empty() {
-            eyre::bail!("No events to process");
-        }
-
         let total_rate = events.iter().map(|e| e.rate).sum::<f64>();
         if total_rate == 0.0 {
-            eyre::bail!("Total rate of events is 0, no transitions are possible");
+            log::debug!("Total rate of events is 0, no transitions are possible");
         };
 
         // TODO: We could leave this as an iterator. I didn't because the generics where being a
@@ -59,15 +56,12 @@ pub trait Particle {
     }
 
     /// Advances in-place the state of a particle, and returns the time elapsed to make that transition.
+    // TODO: This doesn't need to be a result anymore.
     fn advance_state(&self, state: &Self::State) -> eyre::Result<(Self::State, f64)> {
         let events = self.events(state);
-        if events.is_empty() {
-            eyre::bail!("No events to process");
-        }
-
         let total_rate = events.iter().map(|e| e.rate).sum::<f64>();
         if total_rate == 0.0 {
-            eyre::bail!("Total rate of events is 0, no transitions are possible");
+            log::debug!("Total rate of events is 0.0, no more transitions will ocurr");
         };
 
         let delta_t = -rand::random::<f64>().log2() / total_rate;
@@ -140,7 +134,7 @@ macro_rules! monomorphize {
             /// If a state is not contained in the list it can be assumed is 0.
             #[pyo3(name = "event_probabilities")]
             fn event_probabilities_python(
-                &self, 
+                &self,
                 state: &<$type as Particle>::State
             ) -> pyo3::PyResult<Vec<(<$type as Particle>::State, f64)>> {
                 self.event_probabilities(state)
@@ -184,8 +178,10 @@ macro_rules! monomorphize {
                 self.inner.last_theta()
             }
 
-            pub fn advance_until(&mut self, t: f64) -> pyo3::PyResult<()> {
-                self.inner.advance_until(t).map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
+            pub fn advance_until(&mut self, t: f64, py: ::pyo3::Python<'_>) -> pyo3::PyResult<()> {
+                py.allow_threads(|| {
+                    self.inner.advance_until(t).map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
+                })
             }
         }
 
@@ -214,8 +210,10 @@ macro_rules! monomorphize {
                     .collect()
             }
 
-            pub fn advance_until(&mut self, t: f64) -> pyo3::PyResult<()> {
-                self.inner.advance_until(t).map_err(|err| pyo3::exceptions::PyException::new_err(err.to_string()))
+            pub fn advance_until(&mut self, t: f64, py: ::pyo3::Python<'_>) -> pyo3::PyResult<()> {
+                py.allow_threads(|| {
+                    self.inner.advance_until(t).map_err(|err| pyo3::exceptions::PyException::new_err(err.to_string()))
+                })
             }
         }
 

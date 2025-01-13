@@ -14,7 +14,13 @@ pyo3_stub_gen::define_stub_info_gatherer!(stub_info);
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-mod core {
-    #[pymodule_export]
-    use crate::particle::{Interfering, MonoLigand, MultiLigand};
+fn core(m: Bound<'_, PyModule>) -> PyResult<()> {
+    pyo3_log::init();
+
+    use crate::particle::*;
+    m.add_class::<MonoLigand>()?;
+    m.add_class::<MultiLigand>()?;
+    m.add_class::<Interfering>()?;
+    
+    Ok(())
 }
