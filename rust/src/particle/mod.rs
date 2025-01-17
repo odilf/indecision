@@ -80,12 +80,7 @@ pub trait Particle {
             log::debug!("Total rate of events is 0.0, no more transitions will ocurr");
         };
 
-        // Necessary to special-case, otherwise we get negative infinity.
-        let delta_t = if total_rate == 0.0 {
-            f64::INFINITY
-        } else {
-            -rand::random::<f64>().log2() / total_rate
-        };
+        let delta_t = -rand::random::<f64>().log2() / total_rate;
 
         let r = rand::random::<f64>() * total_rate;
 
@@ -202,7 +197,7 @@ macro_rules! monomorphize {
                 self.inner.thetas(samples).collect()
             }
 
-            /// Returns the states at the last point in the simulation. 
+            /// Returns the states at the last point in the simulation.
             pub fn last_states(&self) -> Vec<<$type as Particle>::State> {
                 self.inner.last_states().into_iter().cloned().collect()
             }
