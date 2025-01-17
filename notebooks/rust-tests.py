@@ -31,13 +31,29 @@ interfering = particle.Interfering(
     obstruction_factor=0.8
 )
 
+fatiguing = particle.Fatiguing(
+    total_ligands=10,
+    attachment_rate=1.0,
+    fatigued_attachment_rate=0.1,
+    deattachment_rate=0.5,
+    enter_rate=0.05,
+    inital_collision_factor=0.8,
+    obstruction_factor=0.8,
+    fatigued_obstruction_factor=0.06,
+    receptor_density=1.0,
+    binding_strength=1.0, 
+)
+
 particles = [ 
     mono_ligand,
     multi_ligand,
+    fatiguing,
     interfering,
 ]
 
+
 for p in particles:
+    logging.debug(p)
     simulation = p.simulate_many(1000)
     simulation.advance_until(1000.0)
 

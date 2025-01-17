@@ -1,12 +1,12 @@
 //! Particle implementations
 
-// mod fatiguing;
+mod fatiguing;
 mod interfering;
 mod mono_ligand;
 mod multi_ligand;
 // mod walker;
 
-// pub use fatiguing::Fatiguing;
+pub use fatiguing::Fatiguing;
 pub use interfering::Interfering;
 pub use mono_ligand::MonoLigand;
 pub use multi_ligand::MultiLigand;
@@ -59,30 +59,55 @@ pub trait Particle {
     // TODO: This doesn't need to be a result anymore.
     fn advance_state(&self, state: &Self::State) -> eyre::Result<(Self::State, f64)> {
         let events = self.events(state);
+
+        // Note: we always need one event because we need to have a return value for the function.
+        // If no more transitions should occur, you should still have at least one event with rate
+        // 0.0. Then it would place the theoretical transition to said event at `t == infinity`,
+        // but we need some valid state to put there. Using an `Option` might technically be more
+        // idiomatic, but it's a hassle for little benefit. And an event with rate 0.0 is still
+        // decently idiomatic. 
+        if events.len() == 0 {
+            eyre::bail!("No events to process.");
+        }
+
         let total_rate = events.iter().map(|e| e.rate).sum::<f64>();
         if total_rate == 0.0 {
             log::debug!("Total rate of events is 0.0, no more transitions will ocurr");
         };
 
-        let delta_t = -rand::random::<f64>().log2() / total_rate;
+        // Necessary to special-case, otherwise we get negative infinity.
+        let delta_t = if total_rate == 0.0 {
+            f64::INFINITY
+        } else {
+            -rand::random::<f64>().log2() / total_rate
+        };
+
+
         let r = rand::random::<f64>() * total_rate;
 
         let mut cumulative_rate = 0.0;
         for event in events {
             cumulative_rate += event.rate;
-            if cumulative_rate > r {
+            if cumulative_rate >= r {
                 let next_state = event.target;
                 return Ok((next_state, delta_t));
             }
         }
 
-        // Maybe we want to remove this unsafe
-
-        // SAFETY: `rand::random` generates the half-open range `[0, 1)`, so `r` is between `[0,
-        // total_rate]`. `total_rate` is the sum of all `event.rate`s, and in the loop we
-        // eventually add all of the `event.rate`s. Therefore, the loop can only exit if
-        // `cumulative_rate` is equal to `total_rate`, but since `r` is always less than
-        // `total_rate`, the loop will never exit. Ergo, this function is never called.
+        // SAFETY: This unsafe should never be hit. This unsafe is hit if the loop is exited, so
+        // the loop should never be exited. 
+        //
+        // We assert at the top that there are more than 0 events, so the loop is entered.
+        //
+        // Inside the loop, `rand::random` generates the half-open range `[0, 1)`, so `r` is between `[0,
+        // total_rate)`. The last value of `cumulative_rate` before exiting the loop will be
+        // `total_rate`, since we add up all the `event.rate`s, which is preciesly how we obtained
+        // `total_rate` in the first place. But we return from the function if `cumulative_rate` is
+        // greater than `r`. Therefore, it is impossible to exit the loop because `cumulative_rate`
+        // has to be equal to `total_rate`, but that means that it will have been at some point
+        // greater than `r`, which returns from the function.
+        //
+        // Ergo, this block is never reached. 
         unsafe { std::hint::unreachable_unchecked() }
     }
 

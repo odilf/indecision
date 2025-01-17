@@ -21,6 +21,7 @@ fn core(m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<MonoLigand>()?;
     m.add_class::<MultiLigand>()?;
     m.add_class::<Interfering>()?;
-    
+    m.add_class::<Fatiguing>()?;
+
     Ok(())
 }

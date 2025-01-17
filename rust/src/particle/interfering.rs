@@ -78,7 +78,7 @@ impl super::Particle for Interfering {
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         if state.has_entered {
-            return Vec::new();
+            return vec![Event { target: *state, rate: 0.0 }];
         }
 
         let mut events = Vec::with_capacity(3);

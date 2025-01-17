@@ -3,6 +3,100 @@
 
 import typing
 
+class Fatiguing:
+    r"""
+    TODO
+    """
+    total_ligands: int
+    attachment_rate: float
+    fatigued_attachment_rate: float
+    deattachment_rate: float
+    enter_rate: float
+    inital_collision_factor: float
+    obstruction_factor: float
+    fatigued_obstruction_factor: float
+    receptor_density: float
+    binding_strength: float
+    def __new__(cls,total_ligands:int, attachment_rate:float, fatigued_attachment_rate:float, deattachment_rate:float, enter_rate:float, inital_collision_factor:float, obstruction_factor:float, fatigued_obstruction_factor:float, receptor_density:float, binding_strength:float): ...
+    def simulate(self) -> FatiguingSimulationSingle:
+        r"""
+        Create a new single-particle simulation from this particle.
+        """
+        ...
+
+    def simulate_many(self, n:int) -> FatiguingSimulation:
+        r"""
+        Create a new `n`-particle simulation from this particle.
+        """
+        ...
+
+    def states(self) -> list[FatiguingState]:
+        ...
+
+    def event_probabilities(self, state:FatiguingState) -> list[tuple[FatiguingState, float]]:
+        r"""
+        A list of probabilities for each possible next state.
+        
+        If a state is not contained in the list it can be assumed is 0.
+        """
+        ...
+
+    def total_ligands(self) -> int:
+        r"""
+        The total amount of ligands the particle has.
+        """
+        ...
+
+    def free_ligands(self, state:FatiguingState) -> int:
+        r"""
+        The total amount of free ligands in a state's particle.
+        """
+        ...
+
+
+class FatiguingSimulation:
+    def __new__(cls,particle:Fatiguing, n:int): ...
+    def sample(self, samples:int) -> list[list[FatiguingState]]:
+        ...
+
+    def thetas(self, samples:int) -> list[float]:
+        ...
+
+    def last_theta(self) -> float:
+        ...
+
+    def advance_until(self, t:float) -> None:
+        ...
+
+
+class FatiguingSimulationSingle:
+    transition_history: list[FatiguingTransition]
+    def __new__(cls,particle:Fatiguing): ...
+    def advance_until(self, t:float) -> None:
+        ...
+
+
+class FatiguingState:
+    r"""
+    A fatigue-interference model.
+    
+    From the paper:
+    
+    > The idea is that ligands, which were bound but disconnected again from the cell,
+    > don’t go back to their original state but are now considered "fatigued". They
+    > then receive a different, much lower, rate for attaching to the cell again. This
+    > way, the particles will have a chance to slowly detach again from the cell and
+    > eventually, when fully detached, get the opportunity to explore different cells,
+    > until they find the correct density.
+    """
+    has_entered: bool
+    attached_ligands: int
+    fatigued_ligands: int
+
+class FatiguingTransition:
+    time: float
+    target: FatiguingState
+
 class Interfering:
     r"""
     A multi-valent particle that can attach and enter a host.
