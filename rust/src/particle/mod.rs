@@ -129,6 +129,8 @@ pub struct Event<State> {
 #[macro_export]
 macro_rules! monomorphize {
     ($type:path $({ $($impls:tt)* })?, $simulation:ident, $simulation_single:ident, $transition:ident $(,)?) => {
+        type _State = <$type as Particle>::State;
+
         #[pyo3_stub_gen::derive::gen_stub_pymethods]
         #[pyo3::pymethods]
         impl $type {
@@ -142,8 +144,9 @@ macro_rules! monomorphize {
                 $simulation::new(self.clone(), n)
             }
 
+            /// Enumeration of all possible states for the particle.
             #[pyo3(name = "states")]
-            fn states_python(&self) -> Vec<<$type as Particle>::State> {
+            fn states_python(&self) -> Vec<_State> {
                 $crate::simulation::markov::MarkovChain::states(self)
             }
 
@@ -153,8 +156,8 @@ macro_rules! monomorphize {
             #[pyo3(name = "event_probabilities")]
             fn event_probabilities_python(
                 &self,
-                state: &<$type as Particle>::State
-            ) -> Vec<(<$type as Particle>::State, f64)> {
+                state: &_State
+            ) -> Vec<(_State, f64)> {
                 self.event_probabilities(state).collect()
             }
 
@@ -179,26 +182,46 @@ macro_rules! monomorphize {
                 }
             }
 
-            pub fn sample(&self, samples: usize) -> Vec<Vec<<$type as Particle>::State>> {
+            /// Takes `n` evenly spaced samples between `0` and [`Self::time`], using
+            /// [`Self::states_at_time`].
+            pub fn sample(&self, samples: usize) -> Vec<Vec<_State>> {
                 self.inner
                     .sample(samples)
                     .map(|s| s.into_iter().map(|v| v.clone()).collect())
                     .collect()
             }
 
+            /// Returns the attachment percentage (theta), at evenly spaced samples (using [`Self::sample`]).
             pub fn thetas(&self, samples: usize) -> Vec<f64> {
                 self.inner.thetas(samples).collect()
             }
 
             /// Returns the states at the last point in the simulation.
-            pub fn last_states(&self) -> Vec<<$type as Particle>::State> {
+            pub fn last_states(&self) -> Vec<_State> {
                 self.inner.last_states().into_iter().cloned().collect()
             }
 
+            /// The transition histories of all simulations. 
+            ///
+            /// Just in case, it is returned as a list of transition histories, not the other way around.
+            pub fn transition_histories(&self) -> Vec<Vec<$transition>> {
+                self.inner.transition_histories()
+                    .map(|history| {
+                        history
+                            .into_iter()
+                            .map(|transition| $transition { inner: transition.clone() })
+                            .collect()
+                    })
+                    .collect()
+            }
+
+            /// Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
+            /// commonly denoted with the greek theta (θ).
             pub fn last_theta(&self) -> f64 {
                 self.inner.last_theta()
             }
 
+            /// Advances the simulation until a particular time.
             pub fn advance_until(&mut self, t: f64, py: ::pyo3::Python<'_>) -> pyo3::PyResult<()> {
                 py.allow_threads(|| {
                     self.inner.advance_until(t).map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
@@ -241,7 +264,7 @@ macro_rules! monomorphize {
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
         pub struct $transition {
-            pub inner: $crate::simulation::Transition<<$type as Particle>::State>,
+            pub inner: $crate::simulation::Transition<_State>,
         }
 
         #[pyo3_stub_gen::derive::gen_stub_pymethods]
@@ -255,7 +278,7 @@ macro_rules! monomorphize {
 
             #[getter]
             /// The state that it was transitioned _to_.
-            pub fn target(&self) -> <$type as Particle>::State {
+            pub fn target(&self) -> _State {
                 self.inner.target
             }
         }

@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use crate::particle::{self, Attach as _, Particle};
 
-use super::SimulationSingle;
+use super::{SimulationSingle, Transition};
 
 /// Simulation of many particles at once.
 ///
@@ -44,7 +44,7 @@ impl<P: Particle> Simulation<P> {
 
     /// Advances the simulation until a particular time.
     ///
-    /// See also [`Simulation::advance_until`].
+    /// See also [`SimulationSingle::advance_until`].
     pub fn advance_until(&mut self, t: f64) -> eyre::Result<()>
     where
         P::State: Clone,
@@ -55,6 +55,15 @@ impl<P: Particle> Simulation<P> {
             .par_iter_mut()
             .map(|sim| sim.advance_until(t))
             .collect()
+    }
+
+    /// The transition histories of all simulations. 
+    ///
+    /// Just in case, it is returned as a list of transition histories, not the other way around.
+    pub fn transition_histories(
+        &self,
+    ) -> impl Iterator<Item = &Vec<Transition<P::State>>> {
+        self.simulations.iter().map(|sim| &sim.transition_history)
     }
 
     /// Collects a vector of the states of all simulations at a particular time.
