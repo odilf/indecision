@@ -1,21 +1,12 @@
-use core::fmt;
-
 use pyo3::PyResult;
 
-use crate::simulation::{markov::MarkovChain, Simulation};
+use crate::simulation::markov::MarkovChain;
 
 use super::{Event, Particle};
 
-/// A fatigue-interference model.
+/// # Invariants
 ///
-/// From the paper:
-///
-/// > The idea is that ligands, which were bound but disconnected again from the cell,
-/// > don’t go back to their original state but are now considered "fatigued". They
-/// > then receive a different, much lower, rate for attaching to the cell again. This
-/// > way, the particles will have a chance to slowly detach again from the cell and
-/// > eventually, when fully detached, get the opportunity to explore different cells,
-/// > until they find the correct density.
+/// - `has_entered && has_exited == false`
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Copy, Debug, Default, derive_more::Display)]
@@ -23,6 +14,9 @@ use super::{Event, Particle};
 pub struct FatiguingState {
     #[pyo3(get)]
     has_entered: bool,
+
+    #[pyo3(get)]
+    has_exited: bool,
 
     #[pyo3(get)]
     attached_ligands: u16,
@@ -61,6 +55,13 @@ impl FatiguingState {
     }
 
     pub fn unbind(&self) -> Self {
+        if self.attached_ligands == 1 {
+            return Self {
+                has_exited: true,
+                ..*self
+            };
+        }
+
         Self {
             attached_ligands: self.attached_ligands - 1,
             fatigued_ligands: self.fatigued_ligands + 1,
@@ -69,7 +70,16 @@ impl FatiguingState {
     }
 }
 
-/// TODO
+/// A fatigue-interference model.
+///
+/// From the paper:
+///
+/// > The idea is that ligands, which were bound but disconnected again from the cell,
+/// > don’t go back to their original state but are now considered "fatigued". They
+/// > then receive a different, much lower, rate for attaching to the cell again. This
+/// > way, the particles will have a chance to slowly detach again from the cell and
+/// > eventually, when fully detached, get the opportunity to explore different cells,
+/// > until they find the correct density.
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Debug, Default)]
@@ -125,7 +135,7 @@ impl super::Particle for Fatiguing {
     type State = FatiguingState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
-        if state.has_entered {
+        if state.has_entered || state.has_exited {
             return vec![Event {
                 target: *state,
                 rate: 0.0,
@@ -175,6 +185,7 @@ impl super::Particle for Fatiguing {
             attached_ligands: 0,
             fatigued_ligands: 0,
             has_entered: false,
+            has_exited: false,
         }
     }
 }
@@ -183,17 +194,20 @@ impl MarkovChain for Fatiguing {
     fn states(&self) -> Vec<Self::State> {
         // Possibles states fro attached ligands and fatigued ligands form a triangle in state
         // space, so a reasonable estimate would be total ligands squared over 2, but we have to
-        // multiply by 2 since we have a boolean `has_entered` so it just works out to
+        // multiply by 4 since we have two booleans, so it just works out to
         // `total_ligands.pow(2)`.
-        let mut output = Vec::with_capacity(self.total_ligands.pow(2) as usize);
+        let mut output = Vec::with_capacity(self.total_ligands.pow(2) as usize * 2);
         for attached_ligands in 0..=self.total_ligands {
             for fatigued_ligands in 0..=(self.total_ligands - attached_ligands) {
                 for has_entered in [true, false] {
-                    output.push(Self::State {
-                        attached_ligands,
-                        fatigued_ligands,
-                        has_entered,
-                    })
+                    for has_exited in [true, false] {
+                        output.push(Self::State {
+                            attached_ligands,
+                            fatigued_ligands,
+                            has_entered,
+                            has_exited,
+                        })
+                    }
                 }
             }
         }
@@ -250,6 +264,8 @@ crate::monomorphize!(
 
 #[test]
 fn obstruction_factor_0_doesn_crash() {
+    use crate::simulation::Simulation;
+
     let particle = Fatiguing {
         total_ligands: 5,
         attachment_rate: 1.0,
