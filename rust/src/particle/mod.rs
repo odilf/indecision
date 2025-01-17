@@ -37,22 +37,16 @@ pub trait Particle {
     /// A list of probabilities for each possible next state.
     ///
     /// If a state is not contained in the list it can be assumed is 0.
-    // TODO: This doesn't need to be a result anymore (like `advance_state`).
-    fn event_probabilities(&self, state: &Self::State) -> eyre::Result<Vec<(Self::State, f64)>> {
+    fn event_probabilities(&self, state: &Self::State) -> impl Iterator<Item = (Self::State, f64)> {
         let events = self.events(state);
         let total_rate = events.iter().map(|e| e.rate).sum::<f64>();
         if total_rate == 0.0 {
             log::debug!("Total rate of events is 0, no transitions are possible");
         };
 
-        // TODO: We could leave this as an iterator. I didn't because the generics where being a
-        // pain.
-        let output = events
+        events
             .into_iter()
             .map(move |event| (event.target, event.rate / total_rate))
-            .collect();
-
-        Ok(output)
     }
 
     /// Advances in-place the state of a particle, and returns the time elapsed to make that transition.
@@ -160,9 +154,8 @@ macro_rules! monomorphize {
             fn event_probabilities_python(
                 &self,
                 state: &<$type as Particle>::State
-            ) -> pyo3::PyResult<Vec<(<$type as Particle>::State, f64)>> {
-                self.event_probabilities(state)
-                    .map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
+            ) -> Vec<(<$type as Particle>::State, f64)> {
+                self.event_probabilities(state).collect()
             }
 
             $($($impls)*)?
