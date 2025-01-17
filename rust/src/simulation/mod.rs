@@ -1,13 +1,13 @@
-//! Simulation of [`particles`](crate::particle) over time. 
+//! Simulation of [`particles`](crate::particle) over time.
 
-mod single;
 mod many;
 pub mod markov;
+mod single;
 
-pub use single::SimulationSingle;
 pub use many::Simulation;
+pub use single::SimulationSingle;
 
-/// A transition event into a particular `State` that happened at some point in time. 
+/// A transition event into a particular `State` that happened at some point in time.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Transition<State> {
     /// The time at which the event happened.

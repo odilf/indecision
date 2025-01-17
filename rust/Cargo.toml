@@ -19,6 +19,7 @@ ndarray = "0.16.1"
 rust-numpy = "0.1.0"
 pyo3-log = "0.12.1"
 log = "0.4.22"
+derive_more = { version = "1", features = ["display"] }
 
 [build-dependencies]
 pyo3-build-config = "0.23.2"

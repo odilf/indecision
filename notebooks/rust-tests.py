@@ -3,7 +3,7 @@ import os
 
 from indecision_rs import particle
 
-FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
+FORMAT = '%(levelname)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
 logging.getLogger().setLevel(os.environ.get('LOGLEVEL', 'INFO') or logging.INFO)
 
@@ -32,16 +32,15 @@ interfering = particle.Interfering(
 )
 
 fatiguing = particle.Fatiguing(
-    total_ligands=10,
+    total_ligands=5,
     attachment_rate=1.0,
-    fatigued_attachment_rate=0.1,
+    fatigued_attachment_rate=0.01,
     deattachment_rate=0.5,
-    enter_rate=0.05,
-    inital_collision_factor=0.8,
+    enter_rate=1.0,
+    inital_collision_factor=0.0,
     obstruction_factor=0.8,
     fatigued_obstruction_factor=0.06,
     receptor_density=1.0,
-    binding_strength=1.0, 
 )
 
 particles = [ 
@@ -53,7 +52,7 @@ particles = [
 
 
 for p in particles:
-    logging.debug(p)
+    logging.info(f"Testing {p}")
     simulation = p.simulate_many(1000)
     simulation.advance_until(1000.0)
 
@@ -66,5 +65,5 @@ for p in particles:
 
     logging.debug(f"Probability of nexts states is {[prob for (_, prob) in p.event_probabilities(states[0])]}")
 
-logging.info("\nAll seems correct!")
+logging.info("All seems correct!")
 

@@ -48,9 +48,8 @@ impl<P: Particle> SimulationSingle<P> {
         while t >= self.next_transition.time {
             // TODO: This might be doable more efficiently with `mem::swap` shenanigans
             self.transition_history.push(self.next_transition.clone());
-            let (next_state, delta_t) = self
-                .particle
-                .advance_state(&self.next_transition.target)?;
+            let (next_state, delta_t) =
+                self.particle.advance_state(&self.next_transition.target)?;
 
             self.next_transition = Transition {
                 target: next_state,

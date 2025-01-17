@@ -65,12 +65,17 @@ pub trait Particle {
         // 0.0. Then it would place the theoretical transition to said event at `t == infinity`,
         // but we need some valid state to put there. Using an `Option` might technically be more
         // idiomatic, but it's a hassle for little benefit. And an event with rate 0.0 is still
-        // decently idiomatic. 
+        // decently idiomatic.
         if events.len() == 0 {
             eyre::bail!("No events to process.");
         }
 
-        let total_rate = events.iter().map(|e| e.rate).sum::<f64>();
+        let total_rate = events
+            .iter()
+            .inspect(|e| assert!(!e.rate.is_nan()))
+            .map(|e| e.rate)
+            .sum::<f64>();
+
         if total_rate == 0.0 {
             log::debug!("Total rate of events is 0.0, no more transitions will ocurr");
         };
@@ -81,7 +86,6 @@ pub trait Particle {
         } else {
             -rand::random::<f64>().log2() / total_rate
         };
-
 
         let r = rand::random::<f64>() * total_rate;
 
@@ -94,8 +98,10 @@ pub trait Particle {
             }
         }
 
+        dbg!(total_rate, r, cumulative_rate);
+
         // SAFETY: This unsafe should never be hit. This unsafe is hit if the loop is exited, so
-        // the loop should never be exited. 
+        // the loop should never be exited.
         //
         // We assert at the top that there are more than 0 events, so the loop is entered.
         //
@@ -107,7 +113,7 @@ pub trait Particle {
         // has to be equal to `total_rate`, but that means that it will have been at some point
         // greater than `r`, which returns from the function.
         //
-        // Ergo, this block is never reached. 
+        // Ergo, this block is never reached.
         unsafe { std::hint::unreachable_unchecked() }
     }
 

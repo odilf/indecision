@@ -107,7 +107,10 @@ impl MarkovChain for MultiLigand {
     fn states(&self) -> Vec<Self::State> {
         let mut output = Vec::with_capacity(2 * self.total_ligands() as usize);
         for attached_ligands in 0..=self.total_ligands() {
-            output.push(Self::State { attached_ligands, total_ligands: self.total_ligands() });
+            output.push(Self::State {
+                attached_ligands,
+                total_ligands: self.total_ligands(),
+            });
         }
 
         output

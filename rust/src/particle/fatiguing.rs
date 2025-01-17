@@ -2,7 +2,7 @@ use core::fmt;
 
 use pyo3::PyResult;
 
-use crate::simulation::markov::MarkovChain;
+use crate::simulation::{markov::MarkovChain, Simulation};
 
 use super::{Event, Particle};
 
@@ -18,7 +18,8 @@ use super::{Event, Particle};
 /// > until they find the correct density.
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, derive_more::Display)]
+#[display("FatiguingState that {} entered, with {attached_ligands} attached ligands, of which {fatigued_ligands} are fatigued.", if *has_entered { "has" } else { "hasn't" })]
 pub struct FatiguingState {
     #[pyo3(get)]
     has_entered: bool,
@@ -75,49 +76,49 @@ impl FatiguingState {
 pub struct Fatiguing {
     /// Total number of ligands for the particle.
     #[pyo3(get)]
-    total_ligands: u16,
+    pub total_ligands: u16,
 
     /// Rate at which an individual non-fatigued ligand attaches to a host.
     ///
     /// When you have `n` unattached ligands, the probability of going from `n` to `n + 1` attached
     /// ligands is `n * attachment_rate`.
     #[pyo3(get)]
-    attachment_rate: f64,
+    pub attachment_rate: f64,
 
     /// Rate at which an individual fatigued ligand attaches to a host.
     ///
     /// Multiplies the same way as [`Fatiguing::attachment_rate`]
     #[pyo3(get)]
-    fatigued_attachment_rate: f64,
+    pub fatigued_attachment_rate: f64,
 
     /// Rate at which an individual ligand de-attaches from a host.
     ///
     /// Multiplies the same way as [`Fatiguing::attachment_rate`]
     #[pyo3(get)]
-    deattachment_rate: f64,
+    pub deattachment_rate: f64,
 
     /// The rate at which an unobstructed particle enters the host.
     #[pyo3(get)]
-    enter_rate: f64,
+    pub enter_rate: f64,
 
     /// Factor related to the increased difficulty of the initial ligand attaching as opposed to
     /// the rest of them.
     #[pyo3(get)]
-    inital_collision_factor: f64,
+    pub inital_collision_factor: f64,
 
     /// Factor by which the entering rate decrases for a non-fatigued ligand when a new ligand is attached.
     #[pyo3(get)]
-    obstruction_factor: f64,
+    pub obstruction_factor: f64,
 
     /// Factor by which the entering rate decrases for a fatigued ligand when a new ligand is attached.
     #[pyo3(get)]
-    fatigued_obstruction_factor: f64,
+    pub fatigued_obstruction_factor: f64,
 
     /// The density of receptors available to bind to.
     ///
     /// `1.0` corresponds to one receptor per ligand.
     #[pyo3(get)]
-    receptor_density: f64,
+    pub receptor_density: f64,
 }
 
 impl super::Particle for Fatiguing {
@@ -131,36 +132,42 @@ impl super::Particle for Fatiguing {
             }];
         }
 
-        let entering = Event {
-            target: state.toggle_entered(),
-            rate: state.attached_ligands as f64
-                * self.enter_rate
-                * self
-                    .obstruction_factor
-                    .powi(state.attached_ligands as i32 - 1)
-                * self
-                    .fatigued_obstruction_factor
-                    .powi(state.fatigued_ligands as i32),
-        };
+        let mut output = Vec::with_capacity(4);
 
-        let deattach = Event {
-            target: state.unbind(),
-            rate: state.attached_ligands as f64 * self.deattachment_rate,
-        };
+        if state.attached_ligands > 0 {
+            output.push(Event {
+                target: state.toggle_entered(),
+                rate: state.attached_ligands as f64
+                    * self.enter_rate
+                    * self
+                        .obstruction_factor
+                        .powi(state.attached_ligands as i32 - 1)
+                    * self
+                        .fatigued_obstruction_factor
+                        .powi(state.fatigued_ligands as i32),
+            });
 
-        let bind_regular = Event {
+            output.push(Event {
+                target: state.unbind(),
+                rate: state.attached_ligands as f64 * self.deattachment_rate,
+            });
+        }
+
+        output.push(Event {
             target: state.bind_regular(),
             rate: self.free_ligands(*state) as f64 * self.attachment_rate * self.receptor_density,
-        };
+        });
 
-        let bind_fatigued = Event {
-            target: state.bind_fatigued(),
-            rate: state.fatigued_ligands as f64
-                * self.fatigued_attachment_rate
-                * self.receptor_density,
-        };
+        if state.fatigued_ligands > 0 {
+            output.push(Event {
+                target: state.bind_fatigued(),
+                rate: state.fatigued_ligands as f64
+                    * self.fatigued_attachment_rate
+                    * self.receptor_density,
+            });
+        }
 
-        vec![entering, deattach, bind_regular, bind_fatigued]
+        output
     }
 
     fn new_state(&self) -> Self::State {
@@ -240,3 +247,21 @@ crate::monomorphize!(
     FatiguingSimulationSingle,
     FatiguingTransition
 );
+
+#[test]
+fn obstruction_factor_0_doesn_crash() {
+    let particle = Fatiguing {
+        total_ligands: 5,
+        attachment_rate: 1.0,
+        fatigued_attachment_rate: 1.0,
+        deattachment_rate: 1.0,
+        enter_rate: 1.0,
+        inital_collision_factor: 1.0,
+        obstruction_factor: 0.0,
+        fatigued_obstruction_factor: 0.0,
+        receptor_density: 1.0,
+    };
+
+    let mut sim = Simulation::new(particle, 1000);
+    sim.advance_until(1000.0).unwrap();
+}
