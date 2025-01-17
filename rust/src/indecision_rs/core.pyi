@@ -16,8 +16,7 @@ class Fatiguing:
     obstruction_factor: float
     fatigued_obstruction_factor: float
     receptor_density: float
-    binding_strength: float
-    def __new__(cls,total_ligands:int, attachment_rate:float, fatigued_attachment_rate:float, deattachment_rate:float, enter_rate:float, inital_collision_factor:float, obstruction_factor:float, fatigued_obstruction_factor:float, receptor_density:float, binding_strength:float): ...
+    def __new__(cls,total_ligands:int, attachment_rate:float, fatigued_attachment_rate:float, deattachment_rate:float, enter_rate:float, inital_collision_factor:float, obstruction_factor:float, fatigued_obstruction_factor:float, receptor_density:float): ...
     def simulate(self) -> FatiguingSimulationSingle:
         r"""
         Create a new single-particle simulation from this particle.

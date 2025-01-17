@@ -1,3 +1,5 @@
+use core::fmt;
+
 use pyo3::PyResult;
 
 use crate::simulation::markov::MarkovChain;
@@ -116,10 +118,6 @@ pub struct Fatiguing {
     /// `1.0` corresponds to one receptor per ligand.
     #[pyo3(get)]
     receptor_density: f64,
-
-    /// The binding strength of the particle. It makes all transitions occur more often.
-    #[pyo3(get)]
-    binding_strength: f64,
 }
 
 impl super::Particle for Fatiguing {
@@ -127,7 +125,10 @@ impl super::Particle for Fatiguing {
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         if state.has_entered {
-            return vec![Event { target: *state, rate: 0.0 }];
+            return vec![Event {
+                target: *state,
+                rate: 0.0,
+            }];
         }
 
         let entering = Event {
@@ -149,12 +150,14 @@ impl super::Particle for Fatiguing {
 
         let bind_regular = Event {
             target: state.bind_regular(),
-            rate: self.free_ligands(*state) as f64 * self.attachment_rate,
+            rate: self.free_ligands(*state) as f64 * self.attachment_rate * self.receptor_density,
         };
 
         let bind_fatigued = Event {
             target: state.bind_fatigued(),
-            rate: state.fatigued_ligands as f64 * self.fatigued_attachment_rate,
+            rate: state.fatigued_ligands as f64
+                * self.fatigued_attachment_rate
+                * self.receptor_density,
         };
 
         vec![entering, deattach, bind_regular, bind_fatigued]
@@ -205,23 +208,21 @@ crate::monomorphize!(
             obstruction_factor: f64,
             fatigued_obstruction_factor: f64,
             receptor_density: f64,
-            binding_strength: f64,
         ) -> PyResult<Self> {
             if obstruction_factor >= 1.0 {
                 println!("WARNING: `obstruction_factor` should probably be less than 1.0 (is {obstruction_factor})");
             }
 
             Ok(Self {
-            total_ligands,
-            attachment_rate,
-            fatigued_attachment_rate,
-            deattachment_rate,
-            enter_rate,
-            inital_collision_factor,
-            obstruction_factor,
-            fatigued_obstruction_factor,
-            receptor_density,
-            binding_strength,
+                total_ligands,
+                attachment_rate,
+                fatigued_attachment_rate,
+                deattachment_rate,
+                enter_rate,
+                inital_collision_factor,
+                obstruction_factor,
+                fatigued_obstruction_factor,
+                receptor_density,
             })
         }
 
