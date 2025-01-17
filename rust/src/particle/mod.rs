@@ -98,8 +98,6 @@ pub trait Particle {
             }
         }
 
-        dbg!(total_rate, r, cumulative_rate);
-
         // SAFETY: This unsafe should never be hit. This unsafe is hit if the loop is exited, so
         // the loop should never be exited.
         //
@@ -193,7 +191,6 @@ macro_rules! monomorphize {
                 }
             }
 
-            ///
             pub fn sample(&self, samples: usize) -> Vec<Vec<<$type as Particle>::State>> {
                 self.inner
                     .sample(samples)
@@ -203,6 +200,11 @@ macro_rules! monomorphize {
 
             pub fn thetas(&self, samples: usize) -> Vec<f64> {
                 self.inner.thetas(samples).collect()
+            }
+
+            /// Returns the states at the last point in the simulation. 
+            pub fn last_states(&self) -> Vec<<$type as Particle>::State> {
+                self.inner.last_states().into_iter().cloned().collect()
             }
 
             pub fn last_theta(&self) -> f64 {
