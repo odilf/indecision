@@ -74,7 +74,7 @@ impl super::Particle for Fatiguing {
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         let mut events = Vec::with_capacity(2);
 
-        if state.attached_ligands < self.max_ligands() {
+        if state.attached_ligands < self.total_ligands() {
             let rate = self.on_rates[state.attached_ligands as usize]
                 * if state.attached_ligands == 0 {
                     self.receptor_density
@@ -147,7 +147,7 @@ impl Fatiguing {
         })
     }
 
-    fn max_ligands(&self) -> u16 {
+    fn total_ligands(&self) -> u16 {
         assert_eq!(self.on_rates.len(), self.off_rates.len());
         self.on_rates.len() as u16
     }

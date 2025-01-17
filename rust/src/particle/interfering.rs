@@ -83,7 +83,7 @@ impl super::Particle for Interfering {
 
         let mut events = Vec::with_capacity(3);
 
-        if state.attached_ligands < self.max_ligands() {
+        if state.attached_ligands < self.total_ligands() {
             let rate = self.on_rates[state.attached_ligands as usize]
                 * if state.attached_ligands == 0 {
                     self.receptor_density
@@ -126,9 +126,9 @@ impl super::Particle for Interfering {
 
 impl MarkovChain for Interfering {
     fn states(&self) -> Vec<Self::State> {
-        let mut output = Vec::with_capacity(2 * self.max_ligands() as usize);
+        let mut output = Vec::with_capacity(2 * self.total_ligands() as usize);
         for has_entered in [true, false] {
-            for attached_ligands in 0..=self.max_ligands() {
+            for attached_ligands in 0..=self.total_ligands() {
                 output.push(Self::State {
                     has_entered,
                     attached_ligands,
@@ -171,7 +171,7 @@ crate::monomorphize!(
             })
         }
 
-        fn max_ligands(&self) -> u16 {
+        fn total_ligands(&self) -> u16 {
             assert_eq!(self.on_rates.len(), self.off_rates.len());
             self.on_rates.len() as u16
         }

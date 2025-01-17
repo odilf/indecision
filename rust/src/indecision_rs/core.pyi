@@ -34,7 +34,7 @@ class Interfering:
         """
         ...
 
-    def max_ligands(self) -> int:
+    def total_ligands(self) -> int:
         ...
 
 
@@ -168,7 +168,7 @@ class MultiLigand:
         """
         ...
 
-    def max_ligands(self) -> int:
+    def total_ligands(self) -> int:
         ...
 
 
@@ -197,9 +197,9 @@ class MultiLigandSimulationSingle:
 class MultiLigandState:
     r"""
     # Invariants
-    - `attached_ligands <= max_ligands`
+    - `attached_ligands <= total_ligands`
     """
-    max_ligands: int
+    total_ligands: int
     attached_ligands: int
     def bind(self) -> MultiLigandState:
         ...

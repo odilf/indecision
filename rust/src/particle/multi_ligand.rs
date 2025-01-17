@@ -5,13 +5,13 @@ use crate::simulation::markov::MarkovChain;
 use super::{Event, Particle};
 
 /// # Invariants
-/// - `attached_ligands <= max_ligands`
+/// - `attached_ligands <= total_ligands`
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
 #[derive(Clone, Copy, Debug)]
 pub struct MultiLigandState {
     #[pyo3(get, set)]
-    max_ligands: u16,
+    total_ligands: u16,
 
     #[pyo3(get, set)]
     attached_ligands: u16,
@@ -70,7 +70,7 @@ impl super::Particle for MultiLigand {
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
         let mut events = Vec::with_capacity(2);
 
-        if state.attached_ligands < self.max_ligands() {
+        if state.attached_ligands < self.total_ligands() {
             let rate = self.on_rates[state.attached_ligands as usize]
                 * if state.attached_ligands == 0 {
                     self.receptor_density
@@ -98,16 +98,16 @@ impl super::Particle for MultiLigand {
     fn new_state(&self) -> Self::State {
         MultiLigandState {
             attached_ligands: 0,
-            max_ligands: self.max_ligands(),
+            total_ligands: self.total_ligands(),
         }
     }
 }
 
 impl MarkovChain for MultiLigand {
     fn states(&self) -> Vec<Self::State> {
-        let mut output = Vec::with_capacity(2 * self.max_ligands() as usize);
-        for attached_ligands in 0..=self.max_ligands() {
-            output.push(Self::State { attached_ligands, max_ligands: self.max_ligands() });
+        let mut output = Vec::with_capacity(2 * self.total_ligands() as usize);
+        for attached_ligands in 0..=self.total_ligands() {
+            output.push(Self::State { attached_ligands, total_ligands: self.total_ligands() });
         }
 
         output
@@ -137,7 +137,7 @@ crate::monomorphize!(
             })
         }
 
-        fn max_ligands(&self) -> u16 {
+        fn total_ligands(&self) -> u16 {
             assert_eq!(self.on_rates.len(), self.off_rates.len());
             self.on_rates.len() as u16
         }
