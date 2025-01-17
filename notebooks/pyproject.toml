@@ -8,6 +8,7 @@ dependencies = [
     "indecision_rs",
     "matplotlib>=3.9.2",
     "plotly>=5.24.1",
+    "tqdm>=4.67.1",
 ]
 
 [tool.uv.sources]
