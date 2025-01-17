@@ -80,6 +80,12 @@ impl<P: Particle> Simulation<P> {
         })
     }
 
+    /// Returns the states at the last point in the simulation.
+    pub fn last_states(&self) -> Vec<&P::State> {
+        self.states_at_time(self.time())
+            .expect("We are on a valid time")
+    }
+
     /// Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
     /// commonly denoted with the greek theta (θ).
     pub fn last_theta(&self) -> f64

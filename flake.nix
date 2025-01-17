@@ -46,6 +46,7 @@
             packages = [
               pkgs.rustc
               pkgs.cargo
+              pkgs.rustfmt
               pkgs.clippy
               pkgs.uv
             ];
