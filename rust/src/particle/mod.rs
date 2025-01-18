@@ -60,7 +60,7 @@ pub trait Particle {
         // but we need some valid state to put there. Using an `Option` might technically be more
         // idiomatic, but it's a hassle for little benefit. And an event with rate 0.0 is still
         // decently idiomatic.
-        if events.len() == 0 {
+        if events.is_empty() {
             eyre::bail!("No events to process.");
         }
 
@@ -182,6 +182,11 @@ macro_rules! monomorphize {
                 }
             }
 
+            /// The current time of the simulation.
+            pub fn time(&self) -> f64 {
+                self.inner.time()
+            }
+
             /// Takes `n` evenly spaced samples between `0` and [`Self::time`], using
             /// [`Self::states_at_time`].
             pub fn sample(&self, samples: usize) -> Vec<Vec<_State>> {
@@ -201,7 +206,7 @@ macro_rules! monomorphize {
                 self.inner.last_states().into_iter().cloned().collect()
             }
 
-            /// The transition histories of all simulations. 
+            /// The transition histories of all simulations.
             ///
             /// Just in case, it is returned as a list of transition histories, not the other way around.
             pub fn transition_histories(&self) -> Vec<Vec<$transition>> {
@@ -243,6 +248,16 @@ macro_rules! monomorphize {
                 Self {
                     inner: $crate::simulation::SimulationSingle::new(particle),
                 }
+            }
+
+            /// The current time of the simulation.
+            pub fn time(&self) -> f64 {
+                self.inner.time()
+            }
+
+            /// The state of the particle at the last valid time.
+            pub fn last_state(&self) -> _State {
+                self.inner.last_state().clone()
             }
 
             #[getter]

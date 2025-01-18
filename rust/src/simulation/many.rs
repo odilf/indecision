@@ -57,12 +57,10 @@ impl<P: Particle> Simulation<P> {
             .collect()
     }
 
-    /// The transition histories of all simulations. 
+    /// The transition histories of all simulations.
     ///
     /// Just in case, it is returned as a list of transition histories, not the other way around.
-    pub fn transition_histories(
-        &self,
-    ) -> impl Iterator<Item = &Vec<Transition<P::State>>> {
+    pub fn transition_histories(&self) -> impl Iterator<Item = &Vec<Transition<P::State>>> {
         self.simulations.iter().map(|sim| &sim.transition_history)
     }
 

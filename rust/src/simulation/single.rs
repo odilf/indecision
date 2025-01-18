@@ -1,5 +1,4 @@
 use color_eyre::eyre;
-use pyo3::Python;
 
 use crate::particle::Particle;
 
@@ -16,7 +15,6 @@ pub struct SimulationSingle<P: Particle> {
     time: f64,
 }
 
-// Public API for Python
 impl<P: Particle> SimulationSingle<P> {
     /// Constructs a new simulation with the given particle.
     pub fn new(particle: P) -> Self {
@@ -34,6 +32,7 @@ impl<P: Particle> SimulationSingle<P> {
     }
 
     /// The current time of the simulation.
+    #[inline]
     pub const fn time(&self) -> f64 {
         self.time
     }
@@ -71,10 +70,7 @@ impl<P: Particle> SimulationSingle<P> {
     {
         super::Simulation::new(self.particle, n)
     }
-}
 
-// Private API for Python (i.e., not available in Python)
-impl<P: Particle> SimulationSingle<P> {
     /// The last transition that had occurrured at the given time.
     ///
     /// If the time is the same as a transition, that transition is returned.
@@ -103,6 +99,12 @@ impl<P: Particle> SimulationSingle<P> {
     /// The state of the particle at the given time.
     pub fn state_at_time(&self, time: f64) -> Option<&P::State> {
         Some(&self.last_transition_at_time(time)?.target)
+    }
+
+    /// The state of the particle at the last valid time.
+    pub fn last_state(&self) -> &P::State {
+        self.state_at_time(self.time())
+            .expect("Within bounds of time")
     }
 }
 

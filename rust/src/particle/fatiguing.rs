@@ -219,6 +219,7 @@ impl MarkovChain for Fatiguing {
 crate::monomorphize!(
     Fatiguing {
         #[new]
+        #[allow(clippy::too_many_arguments, reason = "consumed by Python, where you can give names to the values")]
         fn new(
             total_ligands: u16,
             attachment_rate: f64,
