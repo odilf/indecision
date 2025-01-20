@@ -23,12 +23,13 @@ multi_ligand = particle.MultiLigand(
 )
 
 interfering = particle.Interfering(
-    receptor_density=1.0,
-    binding_strength=0.1,
-    on_rates=[1.0, 0.5, 0.25],
-    off_rates=[1.0, 0.5, 0.25],
+    total_ligands=10,
+    attachment_rate=1.0,
+    deattachment_rate=0.5,
     enter_rate=1.0,
-    obstruction_factor=0.8
+    inital_collision_factor=0.0,
+    obstruction_factor=0.8,
+    receptor_density=1.0,
 )
 
 fatiguing = particle.Fatiguing(

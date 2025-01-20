@@ -1,5 +1,3 @@
-use pyo3::PyResult;
-
 use crate::simulation::markov::MarkovChain;
 
 use super::{Event, Particle};
@@ -52,31 +50,87 @@ impl InterferingState {
 #[pyo3::pyclass]
 #[derive(Clone, Debug, Default)]
 pub struct Interfering {
-    /// The density of receptors available to bind to.
+    /// Total number of ligands for the particle.
+    #[pyo3(get)]
+    pub total_ligands: u16,
+
+    /// Rate at which an individual ligand attaches to a host.
     ///
-    /// `1.0` corresponds to one receptor per ligand. But perhaps should be by unit area.
-    pub receptor_density: f64,
+    /// When you have `n` unattached ligands, the probability of going from `n` to `n + 1` attached
+    /// ligands is `n * attachment_rate`.
+    #[pyo3(get)]
+    pub attachment_rate: f64,
 
-    /// The binding strength of the particle. It makes all transitions occur more often.
-    pub binding_strength: f64,
-
-    /// The rates for binding. Encoded as `[0->1, 1->2, 2->3, ...]`.
-    pub on_rates: Vec<f64>,
-
-    /// The rates for binding. Encoded as `[1->0, 1->2, 2->3, ...]`.
-    pub off_rates: Vec<f64>,
+    /// Rate at which an individual ligand de-attaches from a host.
+    ///
+    /// Multiplies the same way as [`Fatiguing::attachment_rate`]
+    #[pyo3(get)]
+    pub deattachment_rate: f64,
 
     /// The rate at which an unobstructed particle enters the host.
+    #[pyo3(get)]
     pub enter_rate: f64,
 
-    /// Factor by which the entering rate decrases when a new ligand is attached.
+    /// Factor related to the increased difficulty of the initial ligand attaching as opposed to
+    /// the rest of them.
+    #[pyo3(get)]
+    pub inital_collision_factor: f64,
+
+    /// Factor by which the entering rate decrases for a ligand when a new ligand is attached.
+    #[pyo3(get)]
     pub obstruction_factor: f64,
+
+    /// The density of receptors available to bind to.
+    ///
+    /// `1.0` corresponds to one receptor per ligand.
+    #[pyo3(get)]
+    pub receptor_density: f64,
 }
 
 impl super::Particle for Interfering {
     type State = InterferingState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
+        // if state.has_entered {
+        //     return vec![Event {
+        //         target: *state,
+        //         rate: 0.0,
+        //     }];
+        // }
+        //
+        // let mut events = Vec::with_capacity(3);
+        //
+        // if state.attached_ligands < self.total_ligands() {
+        //     let rate = self.on_rate * state.attached_ligands
+        //         * if state.attached_ligands == 0 {
+        //             self.receptor_density
+        //         } else {
+        //             1.0
+        //         }
+        //         * self.binding_strength;
+        //
+        //     events.push(Event {
+        //         rate,
+        //         target: state.bind(),
+        //     });
+        // }
+        //
+        // if state.attached_ligands > 0 {
+        //     events.push(Event {
+        //         rate: self.off_rates[state.attached_ligands as usize - 1],
+        //         target: state.unbind(),
+        //     });
+        // }
+        //
+        // if !state.has_entered {
+        //     let obstruction = self.obstruction_factor.powi(state.attached_ligands as i32);
+        //     events.push(Event {
+        //         rate: self.enter_rate * obstruction * self.receptor_density,
+        //         target: state.toggle_entered(),
+        //     });
+        // }
+        //
+        // events
         if state.has_entered {
             return vec![Event {
                 target: *state,
@@ -84,39 +138,30 @@ impl super::Particle for Interfering {
             }];
         }
 
-        let mut events = Vec::with_capacity(3);
-
-        if state.attached_ligands < self.total_ligands() {
-            let rate = self.on_rates[state.attached_ligands as usize]
-                * if state.attached_ligands == 0 {
-                    self.receptor_density
-                } else {
-                    1.0
-                }
-                * self.binding_strength;
-
-            events.push(Event {
-                rate,
-                target: state.bind(),
-            });
-        }
+        let mut output = Vec::with_capacity(4);
 
         if state.attached_ligands > 0 {
-            events.push(Event {
-                rate: self.off_rates[state.attached_ligands as usize - 1],
-                target: state.unbind(),
-            });
-        }
-
-        if !state.has_entered {
-            let obstruction = self.obstruction_factor.powi(state.attached_ligands as i32);
-            events.push(Event {
-                rate: self.enter_rate * obstruction * self.receptor_density,
+            output.push(Event {
                 target: state.toggle_entered(),
+                rate: state.attached_ligands as f64
+                    * self.enter_rate
+                    * self
+                        .obstruction_factor
+                        .powi(state.attached_ligands as i32 - 1),
+            });
+
+            output.push(Event {
+                target: state.unbind(),
+                rate: state.attached_ligands as f64 * self.deattachment_rate,
             });
         }
 
-        events
+        output.push(Event {
+            target: state.bind(),
+            rate: self.free_ligands(*state) as f64 * self.attachment_rate * self.receptor_density,
+        });
+
+        output
     }
 
     fn new_state(&self) -> Self::State {
@@ -147,36 +192,36 @@ crate::monomorphize!(
     Interfering {
         #[new]
         fn new(
-            receptor_density: f64,
-            binding_strength: f64,
-            on_rates: Vec<f64>,
-            off_rates: Vec<f64>,
+            total_ligands: u16,
+            attachment_rate: f64,
+            deattachment_rate: f64,
             enter_rate: f64,
+            inital_collision_factor: f64,
             obstruction_factor: f64,
-        ) -> PyResult<Self> {
-            if on_rates.len() != off_rates.len() {
-                return Err(pyo3::exceptions::PyValueError::new_err(
-                    "on_rates and off_rates must have the same length",
-                ));
-            }
-
+            receptor_density: f64,
+        ) -> Self {
             if obstruction_factor >= 1.0 {
                 println!("WARNING: `obstruction_factor` should probably be less than 1.0 (is {obstruction_factor})");
             }
 
-            Ok(Self {
-                receptor_density,
-                binding_strength,
-                on_rates,
-                off_rates,
+            Self {
+                total_ligands,
+                attachment_rate,
+                deattachment_rate,
                 enter_rate,
+                inital_collision_factor,
                 obstruction_factor,
-            })
+                receptor_density,
+            }
         }
 
         fn total_ligands(&self) -> u16 {
-            assert_eq!(self.on_rates.len(), self.off_rates.len());
-            self.on_rates.len() as u16
+            self.total_ligands
+        }
+
+        /// The total amount of free ligands in a state's particle.
+        fn free_ligands(&self, state: InterferingState) -> u16 {
+            self.total_ligands - state.attached_ligands
         }
     },
     InterferingSimulation,
