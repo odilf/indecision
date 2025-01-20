@@ -9,8 +9,7 @@ use super::{Event, Particle};
 /// - `has_entered && has_exited == false`
 #[pyo3_stub_gen::derive::gen_stub_pyclass]
 #[pyo3::pyclass]
-#[derive(Clone, Copy, Debug, Default, derive_more::Display)]
-#[display("FatiguingState that {} entered, with {attached_ligands} attached ligands, of which {fatigued_ligands} are fatigued.", if *has_entered { "has" } else { "hasn't" })]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct FatiguingState {
     #[pyo3(get)]
     has_entered: bool,

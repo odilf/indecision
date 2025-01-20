@@ -167,6 +167,7 @@ macro_rules! monomorphize {
 
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
+        #[derive(Debug, Clone)]
         pub struct $simulation {
             pub inner: $crate::simulation::Simulation<$type>,
         }
@@ -236,6 +237,8 @@ macro_rules! monomorphize {
 
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
+        #[derive(Debug, Clone, derive_more::Display)]
+        #[display("{self:?}")]
         pub struct $simulation_single {
             pub inner: $crate::simulation::SimulationSingle<$type>,
         }
@@ -278,6 +281,8 @@ macro_rules! monomorphize {
 
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
         #[pyo3::pyclass]
+        #[derive(Debug, Clone, derive_more::Display)]
+        #[display("{self:?}")]
         pub struct $transition {
             pub inner: $crate::simulation::Transition<_State>,
         }

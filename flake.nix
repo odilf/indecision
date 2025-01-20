@@ -19,7 +19,6 @@
 
   outputs =
     {
-      self,
       nixpkgs,
       flake-utils,
       ...
@@ -37,9 +36,6 @@
             packages = [
               pkgs.uv
             ];
-            # shellHook = ''
-            #   unset PYTHONPATH
-            # '';
           };
 
           uv = pkgs.mkShell {

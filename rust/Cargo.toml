@@ -20,6 +20,7 @@ rust-numpy = "0.1.0"
 pyo3-log = "0.12.1"
 log = "0.4.22"
 derive_more = { version = "1", features = ["display"] }
+# pyo3_special_method_derive = "0.4.2"
 
 [build-dependencies]
 pyo3-build-config = "0.23.2"
