@@ -11,6 +11,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+license = "MIT"
 
 [dependency-groups]
 dev = ["maturin>=1.7.6"]

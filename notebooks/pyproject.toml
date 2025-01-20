@@ -10,6 +10,7 @@ dependencies = [
     "plotly>=5.24.1",
     "tqdm>=4.67.1",
 ]
+license = "MIT"
 
 [tool.uv.sources]
 indecision = { path = "../", editable = true }
