@@ -161,6 +161,11 @@ macro_rules! monomorphize {
                 self.event_probabilities(state).collect()
             }
 
+            #[pyo3(name = "__repr__")]
+            fn py_repr(&self) -> String {
+                format!("{:?}", self)
+            }
+
             $($($impls)*)?
         }
 
@@ -233,6 +238,11 @@ macro_rules! monomorphize {
                     self.inner.advance_until(t).map_err(|err| ::pyo3::exceptions::PyException::new_err(err.to_string()))
                 })
             }
+
+            #[pyo3(name = "__repr__")]
+            fn py_repr(&self) -> String {
+                format!("{:?}", self.inner)
+            }
         }
 
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
@@ -277,6 +287,11 @@ macro_rules! monomorphize {
                     self.inner.advance_until(t).map_err(|err| pyo3::exceptions::PyException::new_err(err.to_string()))
                 })
             }
+
+            #[pyo3(name = "__repr__")]
+            fn py_repr(&self) -> String {
+                format!("{:?}", self.inner)
+            }
         }
 
         #[pyo3_stub_gen::derive::gen_stub_pyclass]
@@ -300,6 +315,11 @@ macro_rules! monomorphize {
             /// The state that it was transitioned _to_.
             pub fn target(&self) -> _State {
                 self.inner.target
+            }
+
+            #[pyo3(name = "__repr__")]
+            fn py_repr(&self) -> String {
+                format!("{:?}", self.inner)
             }
         }
     };
