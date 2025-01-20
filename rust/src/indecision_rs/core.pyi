@@ -5,7 +5,16 @@ import typing
 
 class Fatiguing:
     r"""
-    TODO
+    A fatigue-interference model.
+    
+    From the paper:
+    
+    > The idea is that ligands, which were bound but disconnected again from the cell,
+    > don’t go back to their original state but are now considered "fatigued". They
+    > then receive a different, much lower, rate for attaching to the cell again. This
+    > way, the particles will have a chance to slowly detach again from the cell and
+    > eventually, when fully detached, get the opportunity to explore different cells,
+    > until they find the correct density.
     """
     total_ligands: int
     attachment_rate: float
@@ -30,6 +39,9 @@ class Fatiguing:
         ...
 
     def states(self) -> list[FatiguingState]:
+        r"""
+        Enumeration of all possible states for the particle.
+        """
         ...
 
     def event_probabilities(self, state:FatiguingState) -> list[tuple[FatiguingState, float]]:
@@ -55,40 +67,80 @@ class Fatiguing:
 
 class FatiguingSimulation:
     def __new__(cls,particle:Fatiguing, n:int): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
     def sample(self, samples:int) -> list[list[FatiguingState]]:
+        r"""
+        Takes `n` evenly spaced samples between `0` and [`Self::time`], using
+        [`Self::states_at_time`].
+        """
         ...
 
     def thetas(self, samples:int) -> list[float]:
+        r"""
+        Returns the attachment percentage (theta), at evenly spaced samples (using [`Self::sample`]).
+        """
+        ...
+
+    def last_states(self) -> list[FatiguingState]:
+        r"""
+        Returns the states at the last point in the simulation.
+        """
+        ...
+
+    def transition_histories(self) -> list[list[FatiguingTransition]]:
+        r"""
+        The transition histories of all simulations.
+        
+        Just in case, it is returned as a list of transition histories, not the other way around.
+        """
         ...
 
     def last_theta(self) -> float:
+        r"""
+        Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
+        commonly denoted with the greek theta (θ).
+        """
         ...
 
     def advance_until(self, t:float) -> None:
+        r"""
+        Advances the simulation until a particular time.
+        """
         ...
 
 
 class FatiguingSimulationSingle:
     transition_history: list[FatiguingTransition]
     def __new__(cls,particle:Fatiguing): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
+    def last_state(self) -> FatiguingState:
+        r"""
+        The state of the particle at the last valid time.
+        """
+        ...
+
     def advance_until(self, t:float) -> None:
         ...
 
 
 class FatiguingState:
     r"""
-    A fatigue-interference model.
+    # Invariants
     
-    From the paper:
-    
-    > The idea is that ligands, which were bound but disconnected again from the cell,
-    > don’t go back to their original state but are now considered "fatigued". They
-    > then receive a different, much lower, rate for attaching to the cell again. This
-    > way, the particles will have a chance to slowly detach again from the cell and
-    > eventually, when fully detached, get the opportunity to explore different cells,
-    > until they find the correct density.
+    - `has_entered && has_exited == false`
     """
     has_entered: bool
+    has_exited: bool
     attached_ligands: int
     fatigued_ligands: int
 
@@ -103,7 +155,14 @@ class Interfering:
     Ligands obtruct the particle from entering, where for each additional attached ligand,
     the entering rate is decreased by a constant factor.
     """
-    def __new__(cls,receptor_density:float, binding_strength:float, on_rates:typing.Sequence[float], off_rates:typing.Sequence[float], enter_rate:float, obstruction_factor:float): ...
+    total_ligands: int
+    attachment_rate: float
+    deattachment_rate: float
+    enter_rate: float
+    inital_collision_factor: float
+    obstruction_factor: float
+    receptor_density: float
+    def __new__(cls,total_ligands:int, attachment_rate:float, deattachment_rate:float, enter_rate:float, inital_collision_factor:float, obstruction_factor:float, receptor_density:float): ...
     def simulate(self) -> InterferingSimulationSingle:
         r"""
         Create a new single-particle simulation from this particle.
@@ -117,6 +176,9 @@ class Interfering:
         ...
 
     def states(self) -> list[InterferingState]:
+        r"""
+        Enumeration of all possible states for the particle.
+        """
         ...
 
     def event_probabilities(self, state:InterferingState) -> list[tuple[InterferingState, float]]:
@@ -130,25 +192,77 @@ class Interfering:
     def total_ligands(self) -> int:
         ...
 
+    def free_ligands(self, state:InterferingState) -> int:
+        r"""
+        The total amount of free ligands in a state's particle.
+        """
+        ...
+
 
 class InterferingSimulation:
     def __new__(cls,particle:Interfering, n:int): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
     def sample(self, samples:int) -> list[list[InterferingState]]:
+        r"""
+        Takes `n` evenly spaced samples between `0` and [`Self::time`], using
+        [`Self::states_at_time`].
+        """
         ...
 
     def thetas(self, samples:int) -> list[float]:
+        r"""
+        Returns the attachment percentage (theta), at evenly spaced samples (using [`Self::sample`]).
+        """
+        ...
+
+    def last_states(self) -> list[InterferingState]:
+        r"""
+        Returns the states at the last point in the simulation.
+        """
+        ...
+
+    def transition_histories(self) -> list[list[InterferingTransition]]:
+        r"""
+        The transition histories of all simulations.
+        
+        Just in case, it is returned as a list of transition histories, not the other way around.
+        """
         ...
 
     def last_theta(self) -> float:
+        r"""
+        Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
+        commonly denoted with the greek theta (θ).
+        """
         ...
 
     def advance_until(self, t:float) -> None:
+        r"""
+        Advances the simulation until a particular time.
+        """
         ...
 
 
 class InterferingSimulationSingle:
     transition_history: list[InterferingTransition]
     def __new__(cls,particle:Interfering): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
+    def last_state(self) -> InterferingState:
+        r"""
+        The state of the particle at the last valid time.
+        """
+        ...
+
     def advance_until(self, t:float) -> None:
         ...
 
@@ -187,6 +301,9 @@ class MonoLigand:
         ...
 
     def states(self) -> list[MonoLigandState]:
+        r"""
+        Enumeration of all possible states for the particle.
+        """
         ...
 
     def event_probabilities(self, state:MonoLigandState) -> list[tuple[MonoLigandState, float]]:
@@ -200,22 +317,68 @@ class MonoLigand:
 
 class MonoLigandSimulation:
     def __new__(cls,particle:MonoLigand, n:int): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
     def sample(self, samples:int) -> list[list[MonoLigandState]]:
+        r"""
+        Takes `n` evenly spaced samples between `0` and [`Self::time`], using
+        [`Self::states_at_time`].
+        """
         ...
 
     def thetas(self, samples:int) -> list[float]:
+        r"""
+        Returns the attachment percentage (theta), at evenly spaced samples (using [`Self::sample`]).
+        """
+        ...
+
+    def last_states(self) -> list[MonoLigandState]:
+        r"""
+        Returns the states at the last point in the simulation.
+        """
+        ...
+
+    def transition_histories(self) -> list[list[MonoLiagndTransition]]:
+        r"""
+        The transition histories of all simulations.
+        
+        Just in case, it is returned as a list of transition histories, not the other way around.
+        """
         ...
 
     def last_theta(self) -> float:
+        r"""
+        Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
+        commonly denoted with the greek theta (θ).
+        """
         ...
 
     def advance_until(self, t:float) -> None:
+        r"""
+        Advances the simulation until a particular time.
+        """
         ...
 
 
 class MonoLigandSimulationSingle:
     transition_history: list[MonoLiagndTransition]
     def __new__(cls,particle:MonoLigand): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
+    def last_state(self) -> MonoLigandState:
+        r"""
+        The state of the particle at the last valid time.
+        """
+        ...
+
     def advance_until(self, t:float) -> None:
         ...
 
@@ -251,6 +414,9 @@ class MultiLigand:
         ...
 
     def states(self) -> list[MultiLigandState]:
+        r"""
+        Enumeration of all possible states for the particle.
+        """
         ...
 
     def event_probabilities(self, state:MultiLigandState) -> list[tuple[MultiLigandState, float]]:
@@ -267,22 +433,68 @@ class MultiLigand:
 
 class MultiLigandSimulation:
     def __new__(cls,particle:MultiLigand, n:int): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
     def sample(self, samples:int) -> list[list[MultiLigandState]]:
+        r"""
+        Takes `n` evenly spaced samples between `0` and [`Self::time`], using
+        [`Self::states_at_time`].
+        """
         ...
 
     def thetas(self, samples:int) -> list[float]:
+        r"""
+        Returns the attachment percentage (theta), at evenly spaced samples (using [`Self::sample`]).
+        """
+        ...
+
+    def last_states(self) -> list[MultiLigandState]:
+        r"""
+        Returns the states at the last point in the simulation.
+        """
+        ...
+
+    def transition_histories(self) -> list[list[MultiLiagndTransition]]:
+        r"""
+        The transition histories of all simulations.
+        
+        Just in case, it is returned as a list of transition histories, not the other way around.
+        """
         ...
 
     def last_theta(self) -> float:
+        r"""
+        Returns the attachment percentage at the last point in time (i.e., [`Self::time`]),
+        commonly denoted with the greek theta (θ).
+        """
         ...
 
     def advance_until(self, t:float) -> None:
+        r"""
+        Advances the simulation until a particular time.
+        """
         ...
 
 
 class MultiLigandSimulationSingle:
     transition_history: list[MultiLiagndTransition]
     def __new__(cls,particle:MultiLigand): ...
+    def time(self) -> float:
+        r"""
+        The current time of the simulation.
+        """
+        ...
+
+    def last_state(self) -> MultiLigandState:
+        r"""
+        The state of the particle at the last valid time.
+        """
+        ...
+
     def advance_until(self, t:float) -> None:
         ...
 
