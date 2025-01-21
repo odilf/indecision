@@ -45,6 +45,8 @@
               pkgs.rustfmt
               pkgs.clippy
               pkgs.uv
+              pkgs.bacon
+              pkgs.rust-analyzer
             ];
           };
         };
