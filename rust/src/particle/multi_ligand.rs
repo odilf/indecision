@@ -1,19 +1,16 @@
-use pyo3::PyResult;
-
 use crate::simulation::markov::MarkovChain;
 
-use super::{Event, Particle};
+use super::Event;
 
 /// # Invariants
 /// - `attached_ligands <= total_ligands`
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all, set_all))]
 #[derive(Clone, Copy, Debug)]
 pub struct MultiLigandState {
-    #[pyo3(get, set)]
-    total_ligands: u16,
-
-    #[pyo3(get, set)]
     attached_ligands: u16,
 }
 
@@ -23,8 +20,11 @@ impl super::Attach for MultiLigandState {
     }
 }
 
-#[pyo3_stub_gen::derive::gen_stub_pymethods]
-#[pyo3::pymethods]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pymethods
+)]
+#[cfg_attr(feature = "python", pyo3::pymethods)]
 impl MultiLigandState {
     pub fn bind(&self) -> Self {
         Self {
@@ -45,8 +45,11 @@ impl MultiLigandState {
 ///
 /// # Invariants
 /// - `on_rates.len() == off_rates.len()`
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all, set_all))]
 #[derive(Clone, Debug, Default)]
 pub struct MultiLigand {
     /// The density of receptors available to bind to.
@@ -98,7 +101,6 @@ impl super::Particle for MultiLigand {
     fn new_state(&self) -> Self::State {
         MultiLigandState {
             attached_ligands: 0,
-            total_ligands: self.total_ligands(),
         }
     }
 }
@@ -107,10 +109,7 @@ impl MarkovChain for MultiLigand {
     fn states(&self) -> Vec<Self::State> {
         let mut output = Vec::with_capacity(2 * self.total_ligands() as usize);
         for attached_ligands in 0..=self.total_ligands() {
-            output.push(Self::State {
-                attached_ligands,
-                total_ligands: self.total_ligands(),
-            });
+            output.push(Self::State { attached_ligands });
         }
 
         output
@@ -119,13 +118,14 @@ impl MarkovChain for MultiLigand {
 
 crate::monomorphize!(
     MultiLigand {
+        #[cfg(feature = "python")]
         #[new]
         fn new(
             receptor_density: f64,
             binding_strength: f64,
             on_rates: Vec<f64>,
             off_rates: Vec<f64>,
-        ) -> PyResult<Self> {
+        ) -> pyo3::PyResult<Self> {
             if on_rates.len() != off_rates.len() {
                 return Err(pyo3::exceptions::PyValueError::new_err(
                     "on_rates and off_rates must have the same length",
@@ -140,7 +140,8 @@ crate::monomorphize!(
             })
         }
 
-        fn total_ligands(&self) -> u16 {
+        /// Total amount of ligands in [`Self`].
+        pub fn total_ligands(&self) -> u16 {
             assert_eq!(self.on_rates.len(), self.off_rates.len());
             self.on_rates.len() as u16
         }

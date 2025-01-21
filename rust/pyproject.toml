@@ -20,7 +20,7 @@ dev = ["maturin>=1.7.6"]
 module-name = "indecision_rs.core"
 python-packages = ["indecision_rs"]
 python-source = "src"
-features = ["pyo3/extension-module"]
+features = ["pyo3/extension-module", "python"]
 
 [tool.uv]
 cache-keys = [

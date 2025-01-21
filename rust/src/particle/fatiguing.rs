@@ -1,26 +1,20 @@
-use pyo3::PyResult;
-
 use crate::simulation::markov::MarkovChain;
 
-use super::{Event, Particle};
+use super::Event;
 
 /// # Invariants
 ///
 /// - `has_entered && has_exited == false`
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all))]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FatiguingState {
-    #[pyo3(get)]
     has_entered: bool,
-
-    #[pyo3(get)]
     has_exited: bool,
-
-    #[pyo3(get)]
     attached_ligands: u16,
-
-    #[pyo3(get)]
     fatigued_ligands: u16,
 }
 
@@ -79,54 +73,48 @@ impl FatiguingState {
 /// > way, the particles will have a chance to slowly detach again from the cell and
 /// > eventually, when fully detached, get the opportunity to explore different cells,
 /// > until they find the correct density.
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all, set_all))]
 #[derive(Clone, Debug, Default)]
 pub struct Fatiguing {
     /// Total number of ligands for the particle.
-    #[pyo3(get)]
     pub total_ligands: u16,
 
     /// Rate at which an individual non-fatigued ligand attaches to a host.
     ///
     /// When you have `n` unattached ligands, the probability of going from `n` to `n + 1` attached
     /// ligands is `n * attachment_rate`.
-    #[pyo3(get)]
     pub attachment_rate: f64,
 
     /// Rate at which an individual fatigued ligand attaches to a host.
     ///
     /// Multiplies the same way as [`Fatiguing::attachment_rate`]
-    #[pyo3(get)]
     pub fatigued_attachment_rate: f64,
 
     /// Rate at which an individual ligand de-attaches from a host.
     ///
     /// Multiplies the same way as [`Fatiguing::attachment_rate`]
-    #[pyo3(get)]
     pub deattachment_rate: f64,
 
     /// The rate at which an unobstructed particle enters the host.
-    #[pyo3(get)]
     pub enter_rate: f64,
 
     /// Factor related to the increased difficulty of the initial ligand attaching as opposed to
     /// the rest of them.
-    #[pyo3(get)]
     pub inital_collision_factor: f64,
 
     /// Factor by which the entering rate decrases for a non-fatigued ligand when a new ligand is attached.
-    #[pyo3(get)]
     pub obstruction_factor: f64,
 
     /// Factor by which the entering rate decrases for a fatigued ligand when a new ligand is attached.
-    #[pyo3(get)]
     pub fatigued_obstruction_factor: f64,
 
     /// The density of receptors available to bind to.
     ///
     /// `1.0` corresponds to one receptor per ligand.
-    #[pyo3(get)]
     pub receptor_density: f64,
 }
 
@@ -217,6 +205,7 @@ impl MarkovChain for Fatiguing {
 
 crate::monomorphize!(
     Fatiguing {
+        #[cfg(feature = "python")]
         #[new]
         #[allow(clippy::too_many_arguments, reason = "consumed by Python, where you can give names to the values")]
         fn new(
@@ -229,12 +218,8 @@ crate::monomorphize!(
             obstruction_factor: f64,
             fatigued_obstruction_factor: f64,
             receptor_density: f64,
-        ) -> PyResult<Self> {
-            if obstruction_factor >= 1.0 {
-                println!("WARNING: `obstruction_factor` should probably be less than 1.0 (is {obstruction_factor})");
-            }
-
-            Ok(Self {
+        ) -> Self {
+            Self {
                 total_ligands,
                 attachment_rate,
                 fatigued_attachment_rate,
@@ -244,16 +229,16 @@ crate::monomorphize!(
                 obstruction_factor,
                 fatigued_obstruction_factor,
                 receptor_density,
-            })
+            }
         }
 
         /// The total amount of ligands the particle has.
-        fn total_ligands(&self) -> u16 {
+        pub fn total_ligands(&self) -> u16 {
             self.total_ligands
         }
 
         /// The total amount of free ligands in a state's particle.
-        fn free_ligands(&self, state: FatiguingState) -> u16 {
+        pub fn free_ligands(&self, state: FatiguingState) -> u16 {
             self.total_ligands - state.fatigued_ligands - state.attached_ligands
         }
     },

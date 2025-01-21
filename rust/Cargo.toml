@@ -6,26 +6,27 @@ license = "MIT"
 
 [lib]
 name = "core"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib", "cdylib"]
+
+[features]
+default = []
+python = ["pyo3", "pyo3-log"]
+python-build-stubs = ["env_logger", "pyo3-stub-gen", "python"]
 
 [dependencies]
 color-eyre = "0.6.3"
 rand = "0.8.5"
-pyo3 = { version = "0.23.2", features = ["extension-module"] }
-numpy = "0.23.0"
-pyo3-stub-gen = { git = "https://github.com/Jij-Inc/pyo3-stub-gen.git" }
-env_logger = "0.11.5"
 rayon = "1.10.0"
-ndarray = "0.16.1"
-rust-numpy = "0.1.0"
-pyo3-log = "0.12.1"
-log = "0.4.22"
-derive_more = { version = "1", features = ["display"] }
-# pyo3_special_method_derive = "0.4.2"
+log = "0.4.25"
+pyo3 = { version = "0.23.4", features = ["extension-module"], optional = true }
+pyo3-log = { version = "0.12.1", optional = true }
+pyo3-stub-gen = { git = "https://github.com/Jij-Inc/pyo3-stub-gen.git", optional = true }
+env_logger = { version = "0.11.6", optional = true }
 
 [build-dependencies]
-pyo3-build-config = "0.23.2"
+pyo3-build-config = "0.23.4"
 
 [[bin]]
 name = "stub_gen"
 doc = false
+required-features = ["python-build-stubs"]

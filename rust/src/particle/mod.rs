@@ -129,22 +129,26 @@ pub struct Event<State> {
 #[macro_export]
 macro_rules! monomorphize {
     ($type:path $({ $($impls:tt)* })?, $simulation:ident, $simulation_single:ident, $transition:ident $(,)?) => {
-        type _State = <$type as Particle>::State;
+        #[cfg(feature = "python")]
+        type _State = <$type as $crate::particle::Particle>::State;
 
-        #[pyo3_stub_gen::derive::gen_stub_pymethods]
-        #[pyo3::pymethods]
+        #[cfg_attr(feature = "python", ::pyo3::pymethods)]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pymethods)]
         impl $type {
             /// Create a new single-particle simulation from this particle.
+            #[cfg(feature = "python")]
             fn simulate(&self) -> $simulation_single {
                 $simulation_single::new(self.clone())
             }
 
             /// Create a new `n`-particle simulation from this particle.
+            #[cfg(feature = "python")]
             fn simulate_many(&self, n: usize) -> $simulation {
                 $simulation::new(self.clone(), n)
             }
 
             /// Enumeration of all possible states for the particle.
+            #[cfg(feature = "python")]
             #[pyo3(name = "states")]
             fn states_python(&self) -> Vec<_State> {
                 $crate::simulation::markov::MarkovChain::states(self)
@@ -153,14 +157,17 @@ macro_rules! monomorphize {
             /// A list of probabilities for each possible next state.
             ///
             /// If a state is not contained in the list it can be assumed is 0.
+            #[cfg(feature = "python")]
             #[pyo3(name = "event_probabilities")]
             fn event_probabilities_python(
                 &self,
                 state: &_State
             ) -> Vec<(_State, f64)> {
+                use $crate::particle::Particle;
                 self.event_probabilities(state).collect()
             }
 
+            #[cfg(feature = "python")]
             #[pyo3(name = "__repr__")]
             fn py_repr(&self) -> String {
                 format!("{:?}", self)
@@ -170,15 +177,17 @@ macro_rules! monomorphize {
         }
 
 
-        #[pyo3_stub_gen::derive::gen_stub_pyclass]
-        #[pyo3::pyclass]
+        #[cfg(feature = "python")]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pyclass)]
+        #[::pyo3::pyclass]
         #[derive(Debug, Clone)]
         pub struct $simulation {
             pub inner: $crate::simulation::Simulation<$type>,
         }
 
-        #[pyo3_stub_gen::derive::gen_stub_pymethods]
-        #[pyo3::pymethods]
+        #[cfg(feature = "python")]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pymethods)]
+        #[::pyo3::pymethods]
         impl $simulation {
             /// Constructs a new simulation of this particle.
             #[new]
@@ -245,16 +254,17 @@ macro_rules! monomorphize {
             }
         }
 
-        #[pyo3_stub_gen::derive::gen_stub_pyclass]
-        #[pyo3::pyclass]
-        #[derive(Debug, Clone, derive_more::Display)]
-        #[display("{self:?}")]
+        #[cfg(feature = "python")]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pyclass)]
+        #[::pyo3::pyclass]
+        #[derive(Debug, Clone)]
         pub struct $simulation_single {
             pub inner: $crate::simulation::SimulationSingle<$type>,
         }
 
-        #[pyo3_stub_gen::derive::gen_stub_pymethods]
-        #[pyo3::pymethods]
+        #[cfg(feature = "python")]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pymethods)]
+        #[::pyo3::pymethods]
         impl $simulation_single {
             #[new]
             pub fn new(particle: $type) -> Self {
@@ -294,16 +304,17 @@ macro_rules! monomorphize {
             }
         }
 
-        #[pyo3_stub_gen::derive::gen_stub_pyclass]
-        #[pyo3::pyclass]
-        #[derive(Debug, Clone, derive_more::Display)]
-        #[display("{self:?}")]
+        #[cfg(feature = "python")]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pyclass)]
+        #[::pyo3::pyclass]
+        #[derive(Debug, Clone)]
         pub struct $transition {
             pub inner: $crate::simulation::Transition<_State>,
         }
 
-        #[pyo3_stub_gen::derive::gen_stub_pymethods]
-        #[pyo3::pymethods]
+        #[cfg(feature = "python")]
+        #[cfg_attr(feature = "python-build-stubs", ::pyo3_stub_gen::derive::gen_stub_pymethods)]
+        #[::pyo3::pymethods]
         impl $transition {
             #[getter]
             /// The time at which the event happened.
@@ -322,5 +333,5 @@ macro_rules! monomorphize {
                 format!("{:?}", self.inner)
             }
         }
-    };
+    }
 }

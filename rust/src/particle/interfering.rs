@@ -1,15 +1,15 @@
 use crate::simulation::markov::MarkovChain;
 
-use super::{Event, Particle};
+use super::Event;
 
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all))]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct InterferingState {
-    #[pyo3(get, set)]
     has_entered: bool,
-
-    #[pyo3(get, set)]
     attached_ligands: u16,
 }
 
@@ -46,44 +46,40 @@ impl InterferingState {
 ///
 /// Ligands obtruct the particle from entering, where for each additional attached ligand,
 /// the entering rate is decreased by a constant factor.
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all, set_all))]
 #[derive(Clone, Debug, Default)]
 pub struct Interfering {
     /// Total number of ligands for the particle.
-    #[pyo3(get)]
     pub total_ligands: u16,
 
     /// Rate at which an individual ligand attaches to a host.
     ///
     /// When you have `n` unattached ligands, the probability of going from `n` to `n + 1` attached
     /// ligands is `n * attachment_rate`.
-    #[pyo3(get)]
     pub attachment_rate: f64,
 
     /// Rate at which an individual ligand de-attaches from a host.
     ///
     /// Multiplies the same way as [`Fatiguing::attachment_rate`]
-    #[pyo3(get)]
     pub deattachment_rate: f64,
 
     /// The rate at which an unobstructed particle enters the host.
-    #[pyo3(get)]
     pub enter_rate: f64,
 
     /// Factor related to the increased difficulty of the initial ligand attaching as opposed to
     /// the rest of them.
-    #[pyo3(get)]
     pub inital_collision_factor: f64,
 
     /// Factor by which the entering rate decrases for a ligand when a new ligand is attached.
-    #[pyo3(get)]
     pub obstruction_factor: f64,
 
     /// The density of receptors available to bind to.
     ///
     /// `1.0` corresponds to one receptor per ligand.
-    #[pyo3(get)]
     pub receptor_density: f64,
 }
 
@@ -190,6 +186,7 @@ impl MarkovChain for Interfering {
 
 crate::monomorphize!(
     Interfering {
+        #[cfg(feature = "python")]
         #[new]
         fn new(
             total_ligands: u16,

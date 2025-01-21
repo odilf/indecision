@@ -2,11 +2,13 @@ use crate::simulation::markov::MarkovChain;
 
 use super::{Event, Particle};
 
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all, set_all))]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MonoLigandState {
-    #[pyo3(get, set)]
     is_attached: bool,
 }
 
@@ -16,8 +18,11 @@ impl super::Attach for MonoLigandState {
     }
 }
 
-#[pyo3_stub_gen::derive::gen_stub_pymethods]
-#[pyo3::pymethods]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pymethods
+)]
+#[cfg_attr(feature = "python", pyo3::pymethods)]
 impl MonoLigandState {
     pub fn toggle(&self) -> Self {
         Self {
@@ -31,8 +36,11 @@ impl MonoLigandState {
 /// This particle is a simple model of a ligand that can attach to a receptor. It has a binding
 /// strength that determines how likely it is to attach to a receptor, and a receptor density that
 /// determines how many receptors are available to attach to.
-#[pyo3_stub_gen::derive::gen_stub_pyclass]
-#[pyo3::pyclass]
+#[cfg_attr(
+    feature = "python-build-stubs",
+    pyo3_stub_gen::derive::gen_stub_pyclass
+)]
+#[cfg_attr(feature = "python", pyo3::pyclass(get_all, set_all))]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MonoLigand {
     /// Density of receptors relative to the number of particles.
@@ -48,7 +56,7 @@ pub struct MonoLigand {
     pub off_rate: f64,
 }
 
-impl super::Particle for MonoLigand {
+impl Particle for MonoLigand {
     type State = MonoLigandState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
@@ -81,6 +89,7 @@ impl MarkovChain for MonoLigand {
 
 crate::monomorphize!(
         MonoLigand {
+            #[cfg(feature = "python")]
             #[new]
             fn new(receptor_density: f64, binding_strength: f64, on_rate: f64, off_rate: f64) -> Self {
                 Self {
