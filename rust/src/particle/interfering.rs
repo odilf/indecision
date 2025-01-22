@@ -2,6 +2,9 @@ use crate::simulation::markov::MarkovChain;
 
 use super::Event;
 
+/// # Invariants
+///
+/// - `has_entered && has_exited == false`
 #[cfg_attr(
     feature = "python-build-stubs",
     pyo3_stub_gen::derive::gen_stub_pyclass
@@ -10,6 +13,7 @@ use super::Event;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct InterferingState {
     has_entered: bool,
+    has_exited: bool,
     attached_ligands: u16,
 }
 
@@ -35,6 +39,14 @@ impl InterferingState {
     }
 
     pub fn unbind(&self) -> Self {
+        if self.attached_ligands == 1 {
+            return Self {
+                attached_ligands: 0,
+                has_exited: true,
+                ..*self
+            };
+        }
+
         Self {
             attached_ligands: self.attached_ligands - 1,
             ..*self
@@ -87,47 +99,7 @@ impl super::Particle for Interfering {
     type State = InterferingState;
 
     fn events(&self, state: &Self::State) -> Vec<Event<Self::State>> {
-        // if state.has_entered {
-        //     return vec![Event {
-        //         target: *state,
-        //         rate: 0.0,
-        //     }];
-        // }
-        //
-        // let mut events = Vec::with_capacity(3);
-        //
-        // if state.attached_ligands < self.total_ligands() {
-        //     let rate = self.on_rate * state.attached_ligands
-        //         * if state.attached_ligands == 0 {
-        //             self.receptor_density
-        //         } else {
-        //             1.0
-        //         }
-        //         * self.binding_strength;
-        //
-        //     events.push(Event {
-        //         rate,
-        //         target: state.bind(),
-        //     });
-        // }
-        //
-        // if state.attached_ligands > 0 {
-        //     events.push(Event {
-        //         rate: self.off_rates[state.attached_ligands as usize - 1],
-        //         target: state.unbind(),
-        //     });
-        // }
-        //
-        // if !state.has_entered {
-        //     let obstruction = self.obstruction_factor.powi(state.attached_ligands as i32);
-        //     events.push(Event {
-        //         rate: self.enter_rate * obstruction * self.receptor_density,
-        //         target: state.toggle_entered(),
-        //     });
-        // }
-        //
-        // events
-        if state.has_entered {
+        if state.has_entered || state.has_exited {
             return vec![Event {
                 target: *state,
                 rate: 0.0,
@@ -164,6 +136,7 @@ impl super::Particle for Interfering {
         InterferingState {
             attached_ligands: 0,
             has_entered: false,
+            has_exited: false,
         }
     }
 }
@@ -172,11 +145,14 @@ impl MarkovChain for Interfering {
     fn states(&self) -> Vec<Self::State> {
         let mut output = Vec::with_capacity(2 * self.total_ligands() as usize);
         for has_entered in [true, false] {
-            for attached_ligands in 0..=self.total_ligands() {
-                output.push(Self::State {
-                    has_entered,
-                    attached_ligands,
-                });
+            for has_exited in [true, false] {
+                for attached_ligands in 0..=self.total_ligands() {
+                    output.push(Self::State {
+                        has_entered,
+                        attached_ligands,
+                        has_exited,
+                    });
+                }
             }
         }
 

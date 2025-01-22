@@ -50,6 +50,7 @@ impl FatiguingState {
     pub fn unbind(&self) -> Self {
         if self.attached_ligands == 1 {
             return Self {
+                attached_ligands: 0,
                 has_exited: true,
                 ..*self
             };
