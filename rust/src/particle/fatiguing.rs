@@ -105,7 +105,7 @@ pub struct Fatiguing {
 
     /// Factor related to the increased difficulty of the initial ligand attaching as opposed to
     /// the rest of them.
-    pub inital_collision_factor: f64,
+    pub initial_collision_factor: f64,
 
     /// Factor by which the entering rate decrases for a non-fatigued ligand when a new ligand is attached.
     pub obstruction_factor: f64,
@@ -151,9 +151,20 @@ impl super::Particle for Fatiguing {
             });
         }
 
+        let collision_factor = {
+            if state.attached_ligands == 0 {
+                self.initial_collision_factor
+            } else {
+                1.0
+            }
+        };
+
         output.push(Event {
             target: state.bind_regular(),
-            rate: self.free_ligands(*state) as f64 * self.attachment_rate * self.receptor_density,
+            rate: self.free_ligands(*state) as f64
+                * self.attachment_rate
+                * self.receptor_density
+                * collision_factor,
         });
 
         if state.fatigued_ligands > 0 {
@@ -161,7 +172,8 @@ impl super::Particle for Fatiguing {
                 target: state.bind_fatigued(),
                 rate: state.fatigued_ligands as f64
                     * self.fatigued_attachment_rate
-                    * self.receptor_density,
+                    * self.receptor_density
+                    * collision_factor,
             });
         }
 
@@ -215,7 +227,7 @@ crate::monomorphize!(
             fatigued_attachment_rate: f64,
             deattachment_rate: f64,
             enter_rate: f64,
-            inital_collision_factor: f64,
+            initial_collision_factor: f64,
             obstruction_factor: f64,
             fatigued_obstruction_factor: f64,
             receptor_density: f64,
@@ -226,7 +238,7 @@ crate::monomorphize!(
                 fatigued_attachment_rate,
                 deattachment_rate,
                 enter_rate,
-                inital_collision_factor,
+                initial_collision_factor,
                 obstruction_factor,
                 fatigued_obstruction_factor,
                 receptor_density,
@@ -258,7 +270,7 @@ fn obstruction_factor_0_doesn_crash() {
         fatigued_attachment_rate: 1.0,
         deattachment_rate: 1.0,
         enter_rate: 1.0,
-        inital_collision_factor: 1.0,
+        initial_collision_factor: 1.0,
         obstruction_factor: 0.0,
         fatigued_obstruction_factor: 0.0,
         receptor_density: 1.0,

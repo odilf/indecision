@@ -84,7 +84,7 @@ pub struct Interfering {
 
     /// Factor related to the increased difficulty of the initial ligand attaching as opposed to
     /// the rest of them.
-    pub inital_collision_factor: f64,
+    pub initial_collision_factor: f64,
 
     /// Factor by which the entering rate decrases for a ligand when a new ligand is attached.
     pub obstruction_factor: f64,
@@ -124,9 +124,17 @@ impl super::Particle for Interfering {
             });
         }
 
+        let collision_factor = {
+            if state.attached_ligands == 0 {
+                self.initial_collision_factor
+            } else {
+                1.0
+            }
+        };
+
         output.push(Event {
             target: state.bind(),
-            rate: self.free_ligands(*state) as f64 * self.attachment_rate * self.receptor_density,
+            rate: self.free_ligands(*state) as f64 * self.attachment_rate * self.receptor_density * collision_factor,
         });
 
         output
@@ -169,7 +177,7 @@ crate::monomorphize!(
             attachment_rate: f64,
             deattachment_rate: f64,
             enter_rate: f64,
-            inital_collision_factor: f64,
+            initial_collision_factor: f64,
             obstruction_factor: f64,
             receptor_density: f64,
         ) -> Self {
@@ -182,7 +190,7 @@ crate::monomorphize!(
                 attachment_rate,
                 deattachment_rate,
                 enter_rate,
-                inital_collision_factor,
+                initial_collision_factor,
                 obstruction_factor,
                 receptor_density,
             }
