@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.10.2"
+__generated_with = "0.10.17"
 app = marimo.App(width="medium")
 
 
@@ -32,7 +32,7 @@ def _(particle, plt):
 
     _thetas = _simulation.thetas(samples=1000)
 
-
+    plt.figure(dpi=300)
     plt.title("Binding of many mono-ligand particles over time")
     plt.plot(_thetas)
     plt.show()
@@ -78,12 +78,13 @@ def _(np, particle):
 
 @app.cell
 def _(N, data, plt, receptor_densities):
-    plt.xscale('log')
-    plt.yscale('log')
+    plt.figure(dpi=300)
 
     for _binding_strength, _thetas in data.items():
         plt.plot(receptor_densities * N, _thetas, label=f"binding strength: {_binding_strength}")
 
+    plt.xscale('log')
+    plt.yscale('log')
     plt.title("Binding percentage of mono-ligand particles with respect to number of receptors")
     plt.legend()
     plt.show()
@@ -94,7 +95,7 @@ def _(N, data, plt, receptor_densities):
 def _(N, data, np, plt, receptor_densities):
     def plot_selectivites(data, convolve=10):
         plt.xscale('log')
-        
+
         for _binding_strength, _thetas in data.items():
             _selectivity = np.gradient(np.log(_thetas), np.log(receptor_densities))
             _selectivity_smooth = np.convolve(_selectivity, np.ones(convolve)/convolve, 'same')
@@ -103,6 +104,7 @@ def _(N, data, np, plt, receptor_densities):
         plt.legend(loc=(1.04, 0))
         plt.show()
 
+    plt.figure(dpi=300)
     plt.title("Selectivity of mono-ligand particles with respect to number of receptors")
     plot_selectivites(data)
     return (plot_selectivites,)
@@ -122,6 +124,7 @@ def _(particle, plt):
 
     _thetas = _simulation.thetas(samples=1000)
 
+    plt.figure(dpi=300)
     plt.title("Binding of many multi-ligand particles over time")
     plt.plot(_thetas)
     plt.show()
@@ -159,6 +162,7 @@ def _(np, particle):
 
 @app.cell
 def _(N_multi, data_multi, plt, receptor_densities):
+    plt.figure(dpi=300)
     plt.xscale('log')
     plt.yscale('log')
 
@@ -171,12 +175,12 @@ def _(N_multi, data_multi, plt, receptor_densities):
     ax.set_aspect('equal', adjustable='box')
     plt.legend(loc=(1.04, 0))
     plt.show()
-
     return (ax,)
 
 
 @app.cell
 def _(data_multi, plot_selectivites, plt):
+    plt.figure(dpi=300)
     plt.title("Selectivity of multi-ligand particles with respect to number of receptors")
     plot_selectivites(data_multi)
     return
